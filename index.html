@@ -387,46 +387,6 @@
             font-weight: 700;
         }
         
-        .status-bar {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: var(--surface-dark);
-            border-radius: var(--radius);
-            font-size: 0.9rem;
-            color: var(--text-primary);
-            border: 1px solid var(--primary-dark);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .progress-container {
-            margin-top: 12px;
-        }
-        
-        .progress-bar {
-            height: 10px;
-            background-color: var(--surface);
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 5px;
-            position: relative;
-        }
-        
-        .progress {
-            height: 100%;
-            background: linear-gradient(90deg, var(--success) 0%, var(--primary-light) 100%);
-            width: 0%;
-            transition: width 0.5s;
-            border-radius: 5px;
-        }
-        
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-        
         .error {
             color: var(--danger);
             background-color: #311b1b;
@@ -662,6 +622,17 @@
             transform: translateY(-2px);
             box-shadow: var(--shadow-2);
         }
+        
+        .btn-disabled {
+            opacity: 0.6;
+            cursor: not-allowed !important;
+            transform: none !important;
+        }
+        
+        .btn-disabled:hover {
+            transform: none !important;
+            box-shadow: var(--shadow-1) !important;
+        }
     </style>
 </head>
 <body>
@@ -833,21 +804,19 @@
             '#2eb62e'  // 深度9
         ];
         
+        // 防止重复操作的状态
+        let isProcessing = false;
+        
         // 初始化
         function init() {
-            loadData();
-            updateUI();
+            // 先绑定事件监听器
+            bindEventListeners();
             
-            // 事件监听器
-            synthesizeBtn.addEventListener('click', manualSynthesize);
-            exportBtn.addEventListener('click', exportData);
-            importBtn.addEventListener('click', () => importFile.click());
-            importFile.addEventListener('change', importData);
-            resetBtn.addEventListener('click', resetData);
-            singleRecipeOnly.addEventListener('change', updateTree);
-            treeSearch.addEventListener('input', updateTree);
-            collapseAllBtn.addEventListener('click', collapseAll);
-            expandAllBtn.addEventListener('click', expandAll);
+            // 然后加载数据
+            loadData();
+            
+            // 最后更新UI
+            updateUI();
             
             // 初始元素自动添加到发现列表
             initialElements.forEach(element => {
@@ -861,8 +830,36 @@
             });
         }
         
+        // 绑定事件监听器
+        function bindEventListeners() {
+            synthesizeBtn.addEventListener('click', manualSynthesize);
+            exportBtn.addEventListener('click', exportData);
+            importBtn.addEventListener('click', () => importFile.click());
+            importFile.addEventListener('change', importData);
+            resetBtn.addEventListener('click', resetData);
+            singleRecipeOnly.addEventListener('change', updateTree);
+            treeSearch.addEventListener('input', debounce(updateTree, 300));
+            collapseAllBtn.addEventListener('click', collapseAll);
+            expandAllBtn.addEventListener('click', expandAll);
+        }
+        
+        // 防抖函数，防止频繁触发
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
         // 手动合成
         async function manualSynthesize() {
+            if (isProcessing) return;
+            
             const itemA = document.getElementById('itemA').value.trim();
             const itemB = document.getElementById('itemB').value.trim();
             
@@ -882,6 +879,11 @@
                 return;
             }
             
+            // 防止重复操作
+            isProcessing = true;
+            synthesizeBtn.classList.add('btn-disabled');
+            synthesizeBtn.innerHTML = '<i class="fas fa-spinner loading"></i> 合成中...';
+            
             try {
                 const result = await callSynthesisAPI(itemA, itemB);
                 showResult(`合成成功: ${itemA} + ${itemB} = ${result.item}`, 'success');
@@ -892,6 +894,11 @@
                 
             } catch (error) {
                 showResult(`合成失败: ${error.message}`, 'error');
+            } finally {
+                // 恢复按钮状态
+                isProcessing = false;
+                synthesizeBtn.classList.remove('btn-disabled');
+                synthesizeBtn.innerHTML = '<i class="fas fa-magic"></i> 合成';
             }
         }
         
@@ -969,112 +976,136 @@
         
         // 更新UI
         function updateUI() {
-            // 更新统计信息
-            document.getElementById('totalElements').textContent = Object.keys(synthesisData.items).length;
-            document.getElementById('totalRecipes').textContent = synthesisData.recipes.length;
-            
-            // 更新深度统计
-            updateDepthStats();
-            
-            // 更新合成树
-            updateTree();
+            try {
+                // 更新统计信息
+                document.getElementById('totalElements').textContent = Object.keys(synthesisData.items).length;
+                document.getElementById('totalRecipes').textContent = synthesisData.recipes.length;
+                
+                // 更新深度统计
+                updateDepthStats();
+                
+                // 更新合成树
+                updateTree();
+            } catch (error) {
+                console.error('更新UI时出错:', error);
+                showResult('更新界面时出现错误，请刷新页面重试', 'error');
+            }
         }
         
         // 更新深度统计
         function updateDepthStats() {
-            const depthCounts = {};
-            
-            // 初始化深度计数
-            for (let i = 0; i <= 9; i++) {
-                depthCounts[i] = 0;
-            }
-            
-            // 统计各深度元素数量
-            Object.values(synthesisData.items).forEach(item => {
-                const depth = Math.min(item.depth, 9);
-                depthCounts[depth] = (depthCounts[depth] || 0) + 1;
-            });
-            
-            // 渲染深度统计
-            let html = '';
-            for (let i = 0; i <= 9; i++) {
-                if (depthCounts[i] > 0) {
-                    html += `<div class="depth-stat">深度 ${i}: <span class="depth-stat-value" style="color: ${depthColors[i]}">${depthCounts[i]}</span></div>`;
+            try {
+                const depthCounts = {};
+                
+                // 初始化深度计数
+                for (let i = 0; i <= 9; i++) {
+                    depthCounts[i] = 0;
                 }
+                
+                // 统计各深度元素数量
+                Object.values(synthesisData.items).forEach(item => {
+                    const depth = Math.min(item.depth, 9);
+                    depthCounts[depth] = (depthCounts[depth] || 0) + 1;
+                });
+                
+                // 渲染深度统计
+                let html = '';
+                for (let i = 0; i <= 9; i++) {
+                    if (depthCounts[i] > 0) {
+                        html += `<div class="depth-stat">深度 ${i}: <span class="depth-stat-value" style="color: ${depthColors[i]}">${depthCounts[i]}</span></div>`;
+                    }
+                }
+                
+                depthStats.innerHTML = html;
+            } catch (error) {
+                console.error('更新深度统计时出错:', error);
             }
-            
-            depthStats.innerHTML = html;
         }
         
         // 更新合成树
         function updateTree() {
-            const treeContainer = document.getElementById('synthesisTree');
-            
-            // 构建树结构
-            const tree = buildSynthesisTree();
-            
-            // 渲染树
-            treeContainer.innerHTML = renderTree(tree);
-            
-            // 添加折叠展开事件
-            addToggleEvents();
-            
-            // 高亮搜索项
-            highlightSearchItems();
+            try {
+                const treeContainer = document.getElementById('synthesisTree');
+                
+                // 构建树结构
+                const tree = buildSynthesisTree();
+                
+                // 渲染树
+                treeContainer.innerHTML = renderTree(tree);
+                
+                // 添加折叠展开事件
+                addToggleEvents();
+                
+                // 高亮搜索项
+                highlightSearchItems();
+            } catch (error) {
+                console.error('更新合成树时出错:', error);
+                const treeContainer = document.getElementById('synthesisTree');
+                treeContainer.innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-triangle"></i> 渲染合成树时出现错误，请尝试刷新页面
+                    </div>
+                `;
+            }
         }
         
         // 构建合成树
         function buildSynthesisTree() {
-            const tree = {};
-            const singleRecipeOnlyChecked = singleRecipeOnly.checked;
-            const searchTerm = treeSearch.value.trim().toLowerCase();
-            
-            // 首先添加初始元素
-            initialElements.forEach(element => {
-                if (matchesFilters(element, searchTerm)) {
-                    tree[element] = {
-                        name: element,
-                        depth: 0,
-                        recipes: [],
-                        isInitial: true
-                    };
-                }
-            });
-            
-            // 添加配方
-            synthesisData.recipes.forEach(recipe => {
-                const resultDepth = synthesisData.items[recipe.result]?.depth || 999;
+            try {
+                const tree = {};
+                const singleRecipeOnlyChecked = singleRecipeOnly.checked;
+                const searchTerm = treeSearch.value.trim().toLowerCase();
                 
-                // 检查是否匹配搜索条件
-                const matches = matchesFilters(recipe.result, searchTerm);
-                
-                if (!matches) {
-                    return;
-                }
-                
-                // 添加到树中
-                if (!tree[recipe.result]) {
-                    tree[recipe.result] = {
-                        name: recipe.result,
-                        depth: resultDepth,
-                        recipes: []
-                    };
-                }
-                
-                // 如果只显示一种合成方式，检查是否已经添加过配方
-                if (singleRecipeOnlyChecked && tree[recipe.result].recipes.length > 0) {
-                    return;
-                }
+                // 首先添加初始元素
+                initialElements.forEach(element => {
+                    if (matchesFilters(element, searchTerm)) {
+                        tree[element] = {
+                            name: element,
+                            depth: 0,
+                            recipes: [],
+                            isInitial: true
+                        };
+                    }
+                });
                 
                 // 添加配方
-                tree[recipe.result].recipes.push({
-                    a: recipe.a,
-                    b: recipe.b,
-                    isSelfSynthesis: recipe.isSelfSynthesis
+                synthesisData.recipes.forEach(recipe => {
+                    const resultDepth = synthesisData.items[recipe.result]?.depth || 999;
+                    
+                    // 检查是否匹配搜索条件
+                    const matches = matchesFilters(recipe.result, searchTerm);
+                    
+                    if (!matches) {
+                        return;
+                    }
+                    
+                    // 添加到树中
+                    if (!tree[recipe.result]) {
+                        tree[recipe.result] = {
+                            name: recipe.result,
+                            depth: resultDepth,
+                            recipes: []
+                        };
+                    }
+                    
+                    // 如果只显示一种合成方式，检查是否已经添加过配方
+                    if (singleRecipeOnlyChecked && tree[recipe.result].recipes.length > 0) {
+                        return;
+                    }
+                    
+                    // 添加配方
+                    tree[recipe.result].recipes.push({
+                        a: recipe.a,
+                        b: recipe.b,
+                        isSelfSynthesis: recipe.isSelfSynthesis
+                    });
                 });
-            });
-            
-            return tree;
+                
+                return tree;
+            } catch (error) {
+                console.error('构建合成树时出错:', error);
+                return {};
+            }
         }
         
         // 检查元素是否匹配筛选条件
@@ -1098,29 +1129,38 @@
                 `;
             }
             
-            let html = '<div class="tree-root">';
-            
-            // 按深度排序
-            const sortedItems = Object.values(tree).sort((a, b) => a.depth - b.depth);
-            
-            sortedItems.forEach(item => {
-                html += renderTreeNode(item, 0, singleRecipeOnly.checked, new Set());
-            });
-            
-            html += '</div>';
-            return html;
+            try {
+                let html = '<div class="tree-root">';
+                
+                // 按深度排序
+                const sortedItems = Object.values(tree).sort((a, b) => a.depth - b.depth);
+                
+                sortedItems.forEach(item => {
+                    html += renderTreeNode(item, 0, singleRecipeOnly.checked, new Set());
+                });
+                
+                html += '</div>';
+                return html;
+            } catch (error) {
+                console.error('渲染树时出错:', error);
+                return `
+                    <div class="error">
+                        <i class="fas fa-exclamation-triangle"></i> 渲染树结构时出现错误
+                    </div>
+                `;
+            }
         }
         
         // 渲染树节点（递归）
         function renderTreeNode(node, level, singleRecipeOnlyFlag, visited) {
             // 避免无限递归
-            if (visited.has(node.name)) {
+            if (visited.has(node.name) || level > 20) {
                 return '';
             }
             
             const isInitial = initialElements.includes(node.name);
             const depthClass = `depth-${Math.min(node.depth, 9)}`;
-            const hasRecipes = node.recipes.length > 0;
+            const hasRecipes = node.recipes && node.recipes.length > 0;
             const searchTerm = treeSearch.value.trim().toLowerCase();
             const isMatched = searchTerm && node.name.toLowerCase().includes(searchTerm);
             
@@ -1230,14 +1270,20 @@
         function addToggleEvents() {
             const nodeContents = document.querySelectorAll('.node-content');
             nodeContents.forEach(content => {
-                content.addEventListener('click', function() {
-                    const treeNode = this.parentElement;
-                    if (treeNode.querySelector('.children')) {
-                        treeNode.classList.toggle('expanded');
-                        treeNode.classList.toggle('collapsed');
-                    }
-                });
+                // 先移除可能存在的旧事件监听器
+                content.removeEventListener('click', toggleNode);
+                // 添加新的事件监听器
+                content.addEventListener('click', toggleNode);
             });
+        }
+        
+        // 切换节点展开/折叠
+        function toggleNode() {
+            const treeNode = this.parentElement;
+            if (treeNode.querySelector('.children')) {
+                treeNode.classList.toggle('expanded');
+                treeNode.classList.toggle('collapsed');
+            }
         }
         
         // 高亮搜索项
@@ -1290,23 +1336,44 @@
         
         // 导出数据
         function exportData() {
-            const dataStr = JSON.stringify(synthesisData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            if (isProcessing) return;
             
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'synthesis-data.json';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            isProcessing = true;
+            exportBtn.classList.add('btn-disabled');
+            
+            try {
+                const dataStr = JSON.stringify(synthesisData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'synthesis-data.json';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                showResult('数据导出成功', 'success');
+            } catch (error) {
+                console.error('导出数据时出错:', error);
+                showResult('导出数据时出现错误', 'error');
+            } finally {
+                isProcessing = false;
+                exportBtn.classList.remove('btn-disabled');
+            }
         }
         
         // 导入数据
         function importData(event) {
+            if (isProcessing) return;
+            
             const file = event.target.files[0];
             if (!file) return;
+            
+            isProcessing = true;
+            importBtn.classList.add('btn-disabled');
+            importBtn.innerHTML = '<i class="fas fa-spinner loading"></i> 导入中...';
             
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -1323,50 +1390,80 @@
                         showResult('数据格式不正确', 'error');
                     }
                 } catch (error) {
+                    console.error('导入数据时出错:', error);
                     showResult('导入失败: ' + error.message, 'error');
+                } finally {
+                    isProcessing = false;
+                    importBtn.classList.remove('btn-disabled');
+                    importBtn.innerHTML = '<i class="fas fa-upload"></i> 导入数据';
+                    // 重置文件输入，允许再次选择同一文件
+                    event.target.value = '';
                 }
             };
             
+            reader.onerror = function() {
+                showResult('读取文件时出错', 'error');
+                isProcessing = false;
+                importBtn.classList.remove('btn-disabled');
+                importBtn.innerHTML = '<i class="fas fa-upload"></i> 导入数据';
+            };
+            
             reader.readAsText(file);
-            // 重置文件输入，允许再次选择同一文件
-            event.target.value = '';
         }
         
         // 重置数据
         function resetData() {
+            if (isProcessing) return;
+            
             if (confirm('确定要重置所有数据吗？这将清除所有已发现的合成路径。')) {
-                synthesisData = {
-                    items: {},
-                    recipes: []
-                };
+                isProcessing = true;
+                resetBtn.classList.add('btn-disabled');
                 
-                // 重新添加初始元素
-                initialElements.forEach(element => {
-                    synthesisData.items[element] = {
-                        name: element,
-                        depth: 0,
-                        discovered: true
+                try {
+                    synthesisData = {
+                        items: {},
+                        recipes: []
                     };
-                });
-                
-                saveData();
-                updateUI();
-                showResult('数据已重置', 'success');
+                    
+                    // 重新添加初始元素
+                    initialElements.forEach(element => {
+                        synthesisData.items[element] = {
+                            name: element,
+                            depth: 0,
+                            discovered: true
+                        };
+                    });
+                    
+                    saveData();
+                    updateUI();
+                    showResult('数据已重置', 'success');
+                } catch (error) {
+                    console.error('重置数据时出错:', error);
+                    showResult('重置数据时出现错误', 'error');
+                } finally {
+                    isProcessing = false;
+                    resetBtn.classList.remove('btn-disabled');
+                }
             }
         }
         
         // 保存数据到本地存储
         function saveData() {
-            localStorage.setItem('synthesisData', JSON.stringify(synthesisData));
+            try {
+                localStorage.setItem('synthesisData', JSON.stringify(synthesisData));
+            } catch (error) {
+                console.error('保存数据到本地存储时出错:', error);
+                showResult('保存数据时出现错误', 'error');
+            }
         }
         
         // 从本地存储加载数据
         function loadData() {
-            const saved = localStorage.getItem('synthesisData');
-            if (saved) {
-                try {
+            try {
+                const saved = localStorage.getItem('synthesisData');
+                if (saved) {
                     synthesisData = JSON.parse(saved);
-                // 确保初始元素存在
+                    // 确保初始元素存在
                     initialElements.forEach(element => {
                         if (!synthesisData.items[element]) {
                             synthesisData.items[element] = {
@@ -1376,9 +1473,8 @@
                             };
                         }
                     });
-                } catch (e) {
-                    console.error('加载保存的数据失败:', e);
-                    // 如果加载失败，使用默认数据
+                } else {
+                    // 如果没有保存的数据，初始化初始元素
                     initialElements.forEach(element => {
                         synthesisData.items[element] = {
                             name: element,
@@ -1387,8 +1483,13 @@
                         };
                     });
                 }
-            } else {
-                // 如果没有保存的数据，初始化初始元素
+            } catch (e) {
+                console.error('加载保存的数据失败:', e);
+                // 如果加载失败，使用默认数据
+                synthesisData = {
+                    items: {},
+                    recipes: []
+                };
                 initialElements.forEach(element => {
                     synthesisData.items[element] = {
                         name: element,
