@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>无尽合成工具</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- LZ-String for compression -->
+    <script src="https://cdn.jsdelivr.net/gh/pieroxy/lz-string@1.4.4/libs/lz-string.min.js"></script>
     <style>
         :root {
             --primary: #2d5a27;
@@ -86,7 +88,7 @@
         
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 1.5fr;
+            grid-template-columns: 1fr 1.5fr; /* 保持两列布局，但左侧内容变少 */
             gap: 0;
         }
         
@@ -157,46 +159,22 @@
             align-items: center;
         }
         
-        .input-group {
-            margin-bottom: 18px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-        }
-        
-        input, select, button {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: var(--transition);
-            background-color: var(--surface-light);
-            color: var(--text-primary);
-        }
-        
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary-light);
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-        }
-        
+        /* 移除了 input-group, label, input, select, button 相关的样式，因为手动合成和自动遍历被移除 */
         button {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             border: none;
             cursor: pointer;
+            padding: 12px 15px;
+            border-radius: var(--radius);
+            font-size: 1rem;
             font-weight: 600;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             box-shadow: var(--shadow-1);
+            transition: var(--transition);
         }
         
         button:hover {
@@ -287,17 +265,7 @@
             transform: translateX(26px);
         }
         
-        .result-box {
-            background-color: var(--surface-dark);
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
-            padding: 15px;
-            margin-top: 15px;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            font-size: 1rem;
-        }
+        /* 移除了 result-box, status-bar, progress-container, progress-bar, progress, progress-info, stats-grid 相关的样式 */
         
         .tree-container {
             max-height: 600px;
@@ -320,12 +288,6 @@
             padding-left: 24px;
             margin: 5px 0;
             position: relative;
-        }
-        
-        .tree li {
-            position: relative;
-            padding: 4px 0;
-            line-height: 1.5;
         }
         
         .tree li:before {
@@ -371,21 +333,24 @@
             box-shadow: var(--shadow-2);
         }
         
-        /* 增强深度颜色区分 */
-        .depth-0 { background-color: #0a2f0a; border-color: #1b5e20; color: #a5d6a7; }
-        .depth-1 { background-color: #0e3e0e; border-color: #2e7d32; color: #81c784; }
-        .depth-2 { background-color: #124d12; border-color: #388e3c; color: #66bb6a; }
-        .depth-3 { background-color: #165c16; border-color: #43a047; color: #4caf50; }
-        .depth-4 { background-color: #1a6b1a; border-color: #4caf50; color: #45a049; }
-        .depth-5 { background-color: #1e7a1e; border-color: #66bb6a; color: #388e3c; }
-        .depth-6 { background-color: #228922; border-color: #81c784; color: #2e7d32; }
-        .depth-7 { background-color: #269826; border-color: #a5d6a7; color: #1b5e20; }
-        .depth-8 { background-color: #2aa72a; border-color: #c8e6c9; color: #0a2f0a; }
-        .depth-9 { background-color: #2eb62e; border-color: #e8f5e9; color: #0a2f0a; }
+        /* 层级颜色区分 */
+        .tier-0 { background-color: #0a2f0a; border-color: #1b5e20; color: #a5d6a7; }
+        .tier-1 { background-color: #0e3e0e; border-color: #2e7d32; color: #81c784; }
+        .tier-2 { background-color: #124d12; border-color: #388e3c; color: #66bb6a; }
+        .tier-3 { background-color: #165c16; border-color: #43a047; color: #4caf50; }
+        .tier-4 { background-color: #1a6b1a; border-color: #4caf50; color: #45a049; }
+        .tier-5 { background-color: #1e7a1e; border-color: #66bb6a; color: #388e3c; }
+        .tier-6 { background-color: #228922; border-color: #81c784; color: #2e7d32; }
+        .tier-7 { background-color: #269826; border-color: #a5d6a7; color: #1b5e20; }
+        .tier-8 { background-color: #2aa72a; border-color: #c8e6c9; color: #0a2f0a; }
+        .tier-9 { background-color: #2eb62e; border-color: #e8f5e9; color: #0a2f0a; }
         
         .initial-item {
             font-weight: 700;
         }
+        
+        /* 移除了 status-bar, progress-container, progress-bar, progress, progress-info, stats-grid 相关的样式 */
+        /* .status-bar, .progress-container, .progress-bar, .progress, .progress-info, .stats-grid 相关的CSS也应该被移除 */
         
         .error {
             color: var(--danger);
@@ -486,6 +451,14 @@
         
         .search-box input {
             padding-left: 45px;
+            width: 100%; /* Ensure search input takes full width */
+            padding: 12px 15px; /* Added padding for consistency */
+            border: 1px solid var(--primary-dark);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: var(--surface-light);
+            color: var(--text-primary);
         }
         
         .self-synthesis {
@@ -493,6 +466,8 @@
             border-color: #5d2b2b;
             color: #f44336;
         }
+        
+        /* 移除了 auto-traverse-active, shimmer, traverse-pulse 动画和相关样式 */
         
         .stats-grid {
             display: grid;
@@ -582,14 +557,14 @@
             padding-left: 0;
         }
         
-        .depth-stats {
+        .tier-stats {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-top: 10px;
         }
         
-        .depth-stat {
+        .tier-stat {
             background: var(--surface-dark);
             border: 1px solid var(--primary-dark);
             border-radius: 4px;
@@ -599,7 +574,7 @@
             align-items: center;
         }
         
-        .depth-stat-value {
+        .tier-stat-value {
             font-weight: bold;
             margin-left: 5px;
         }
@@ -622,17 +597,6 @@
             transform: translateY(-2px);
             box-shadow: var(--shadow-2);
         }
-        
-        .btn-disabled {
-            opacity: 0.6;
-            cursor: not-allowed !important;
-            transform: none !important;
-        }
-        
-        .btn-disabled:hover {
-            transform: none !important;
-            box-shadow: var(--shadow-1) !important;
-        }
     </style>
 </head>
 <body>
@@ -643,55 +607,50 @@
         
         <div class="main-content">
             <div class="left-panel">
+                <!-- 原“手动合成”和“自动遍历”面板已移除 -->
+                
                 <div class="panel">
                     <div class="panel-header">
                         <div style="display: flex; align-items: center;">
                             <div class="panel-icon">
-                                <i class="fas fa-flask"></i>
+                                <i class="fas fa-database"></i>
                             </div>
-                            <h2>手动合成</h2>
+                            <h2>数据管理</h2>
                         </div>
                     </div>
-                    <div class="input-group">
-                        <label for="itemA"><i class="fas fa-tag"></i> 元素 A</label>
-                        <input type="text" id="itemA" placeholder="输入元素名称">
+                    <div class="button-group">
+                        <button id="exportBtn">
+                            <i class="fas fa-download"></i> 导出数据
+                        </button>
+                        <button id="importBtn">
+                            <i class="fas fa-upload"></i> 导入数据
+                        </button>
+                        <button id="resetBtn" class="accent">
+                            <i class="fas fa-trash-alt"></i> 重置数据
+                        </button>
                     </div>
-                    <div class="input-group">
-                        <label for="itemB"><i class="fas fa-tag"></i> 元素 B</label>
-                        <input type="text" id="itemB" placeholder="输入元素名称">
-                    </div>
-                    <button id="synthesizeBtn" class="accent">
-                        <i class="fas fa-magic"></i> 合成
-                    </button>
-                    
-                    <div class="result-box" id="manualResult">
-                        <i class="fas fa-info-circle"></i> 合成结果将显示在这里
-                    </div>
+                    <input type="file" id="importFile" accept=".json,.lzjson" style="display: none;">
                 </div>
-                
+
+                <!-- 仅保留总元素和合成配方统计 -->
                 <div class="panel">
                     <div class="panel-header">
                         <div style="display: flex; align-items: center;">
                             <div class="panel-icon">
                                 <i class="fas fa-chart-bar"></i>
                             </div>
-                            <h2>统计信息</h2>
+                            <h2>统计</h2>
                         </div>
                     </div>
-                    
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-value" id="totalElements">5</div>
+                            <div class="stat-value" id="totalElements">0</div>
                             <div class="stat-label">总元素</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-value" id="totalRecipes">0</div>
                             <div class="stat-label">合成配方</div>
                         </div>
-                    </div>
-                    
-                    <div class="depth-stats" id="depthStats">
-                        <!-- 深度统计将在这里显示 -->
                     </div>
                 </div>
             </div>
@@ -731,38 +690,19 @@
                         <input type="text" id="treeSearch" placeholder="搜索元素...">
                     </div>
                     
+                    <div class="tier-stats" id="tierStats">
+                        <!-- 层级统计将在这里显示 -->
+                    </div>
+                    
                     <div class="tree-container">
                         <div class="tree" id="synthesisTree">
                             <div class="empty-state">
                                 <i class="fas fa-tree"></i>
                                 <h3>暂无合成数据</h3>
-                                <p>开始合成以发现新的元素和配方</p>
+                                <p>导入数据或开始自动遍历以显示合成数据</p>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-database"></i>
-                            </div>
-                            <h2>数据管理</h2>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button id="exportBtn">
-                            <i class="fas fa-download"></i> 导出数据
-                        </button>
-                        <button id="importBtn">
-                            <i class="fas fa-upload"></i> 导入数据
-                        </button>
-                        <button id="resetBtn" class="accent">
-                            <i class="fas fa-trash-alt"></i> 重置数据
-                        </button>
-                    </div>
-                    <input type="file" id="importFile" accept=".json" style="display: none;">
                 </div>
             </div>
         </div>
@@ -771,403 +711,367 @@
     <script>
         // 合成表数据
         let synthesisData = {
-            items: {},
-            recipes: []
+            items: {}, // Key: item name, Value: { name, tier, depth, discovered }
+            recipes: [] // Array of { a, b, result, isSelfSynthesis }
         };
 
         // 初始元素
         const initialElements = ['金', '木', '水', '火', '土'];
         
-        // DOM 元素
-        const synthesizeBtn = document.getElementById('synthesizeBtn');
+        // 用于跟踪已发现的元素名称，方便快速查找和重建 `synthesisData.items`
+        let discoveredItems = new Set(); 
+        
+        // DOM 元素 (移除了手动合成和自动遍历相关的元素)
         const exportBtn = document.getElementById('exportBtn');
         const importBtn = document.getElementById('importBtn');
         const resetBtn = document.getElementById('resetBtn');
         const importFile = document.getElementById('importFile');
         const singleRecipeOnly = document.getElementById('singleRecipeOnly');
         const treeSearch = document.getElementById('treeSearch');
-        const depthStats = document.getElementById('depthStats');
+        const tierStats = document.getElementById('tierStats');
         const collapseAllBtn = document.getElementById('collapseAllBtn');
         const expandAllBtn = document.getElementById('expandAllBtn');
         
-        // 深度颜色数组
-        const depthColors = [
-            '#0a2f0a', // 深度0
-            '#0e3e0e', // 深度1
-            '#124d12', // 深度2
-            '#165c16', // 深度3
-            '#1a6b1a', // 深度4
-            '#1e7a1e', // 深度5
-            '#228922', // 深度6
-            '#269826', // 深度7
-            '#2aa72a', // 深度8
-            '#2eb62e'  // 深度9
+        // 层级颜色数组
+        const tierColors = [
+            '#0a2f0a', // 层级0
+            '#0e3e0e', // 层级1
+            '#124d12', // 层级2
+            '#165c16', // 层级3
+            '#1a6b1a', // 层级4
+            '#1e7a1e', // 层级5
+            '#228922', // 层级6
+            '#269826', // 层级7
+            '#2aa72a', // 层级8
+            '#2eb62e'  // 层级9
         ];
         
-        // 防止重复操作的状态
-        let isProcessing = false;
+        // 最大深度值，用于将自合成配方推到排序的最后
+        const MAX_DEPTH_FOR_SELF_SYNTHESIS = 999999; 
         
         // 初始化
         function init() {
-            // 先绑定事件监听器
-            bindEventListeners();
-            
-            // 然后加载数据
-            loadData();
-            
-            // 最后更新UI
-            updateUI();
-            
-            // 初始元素自动添加到发现列表
-            initialElements.forEach(element => {
-                if (!synthesisData.items[element]) {
-                    synthesisData.items[element] = {
-                        name: element,
-                        depth: 0,
-                        discovered: true
-                    };
-                }
-            });
-        }
-        
-        // 绑定事件监听器
-        function bindEventListeners() {
-            synthesizeBtn.addEventListener('click', manualSynthesize);
+            loadData(); // 加载数据
+            updateUI(); // 更新UI
+
+            // 事件监听器
             exportBtn.addEventListener('click', exportData);
             importBtn.addEventListener('click', () => importFile.click());
             importFile.addEventListener('change', importData);
             resetBtn.addEventListener('click', resetData);
             singleRecipeOnly.addEventListener('change', updateTree);
-            treeSearch.addEventListener('input', debounce(updateTree, 300));
+            treeSearch.addEventListener('input', updateTree);
             collapseAllBtn.addEventListener('click', collapseAll);
             expandAllBtn.addEventListener('click', expandAll);
         }
         
-        // 防抖函数，防止频繁触发
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
+        // 计算配方的路径深度 (现在统一使用更简单的最大深度+1)
+        function calculatePathDepth(recipe) {
+            // 获取素材的深度，如果不存在则默认为0（对于初始元素或尚未完全计算的元素）
+            const aDepth = synthesisData.items[recipe.a]?.depth || 0; 
+            const bDepth = synthesisData.items[recipe.b]?.depth || 0; 
+            
+            // 自合成永远排在最后，使用一个很大的值确保它排在后面
+            if (recipe.isSelfSynthesis) {
+                return MAX_DEPTH_FOR_SELF_SYNTHESIS;
+            }
+            
+            // 对于非自合成，路径深度是其组成素材的最大深度加1
+            return Math.max(aDepth, bDepth) + 1;
+        }
+        
+        // 记录合成结果 (保留此函数用于数据加载/导入时的内部处理)
+        function recordSynthesis(a, b, result, isSelfSynthesis) {
+            // 确保 isSelfSynthesis 参数被正确传递，如果没有则计算
+            if (isSelfSynthesis === undefined) {
+                isSelfSynthesis = (a === result || b === result);
+            }
+            
+            // 确保元素存在，并初始化其深度和层级
+            const ensureItem = (itemName) => {
+                if (!synthesisData.items[itemName]) {
+                    synthesisData.items[itemName] = {
+                        name: itemName,
+                        tier: initialElements.includes(itemName) ? 0 : Infinity, 
+                        depth: initialElements.includes(itemName) ? 0 : Infinity, 
+                        discovered: true
+                    };
+                    discoveredItems.add(itemName); 
+                }
+                // 如果是初始元素，确保其深度和层级为0
+                if (initialElements.includes(itemName)) {
+                    synthesisData.items[itemName].tier = 0;
+                    synthesisData.items[itemName].depth = 0;
+                }
             };
-        }
-        
-        // 手动合成
-        async function manualSynthesize() {
-            if (isProcessing) return;
-            
-            const itemA = document.getElementById('itemA').value.trim();
-            const itemB = document.getElementById('itemB').value.trim();
-            
-            if (!itemA || !itemB) {
-                showResult('请输入两个元素', 'error');
-                return;
-            }
-            
-            // 验证素材是否已记录
-            if (!synthesisData.items[itemA]) {
-                showResult(`元素 "${itemA}" 尚未被发现，请先合成该元素`, 'error');
-                return;
-            }
-            
-            if (!synthesisData.items[itemB]) {
-                showResult(`元素 "${itemB}" 尚未被发现，请先合成该元素`, 'error');
-                return;
-            }
-            
-            // 防止重复操作
-            isProcessing = true;
-            synthesizeBtn.classList.add('btn-disabled');
-            synthesizeBtn.innerHTML = '<i class="fas fa-spinner loading"></i> 合成中...';
-            
-            try {
-                const result = await callSynthesisAPI(itemA, itemB);
-                showResult(`合成成功: ${itemA} + ${itemB} = ${result.item}`, 'success');
-                
-                // 记录合成结果
-                recordSynthesis(itemA, itemB, result.item);
-                updateUI();
-                
-            } catch (error) {
-                showResult(`合成失败: ${error.message}`, 'error');
-            } finally {
-                // 恢复按钮状态
-                isProcessing = false;
-                synthesizeBtn.classList.remove('btn-disabled');
-                synthesizeBtn.innerHTML = '<i class="fas fa-magic"></i> 合成';
-            }
-        }
-        
-        // 调用合成API
-        async function callSynthesisAPI(itemA, itemB) {
-            // 使用代理解决跨域问题
-            const proxyUrl = 'https://api.allorigins.win/raw?url=';
-            const targetUrl = `https://hc.tsdo.in/api?itemA=${encodeURIComponent(itemA)}&itemB=${encodeURIComponent(itemB)}`;
-            
-            try {
-                const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
-                
-                if (!response.ok) {
-                    throw new Error('网络请求失败');
-                }
-                
-                return await response.json();
-            } catch (error) {
-                // 如果代理失败，尝试直接请求
-                try {
-                    const response = await fetch(`https://hc.tsdo.in/api?itemA=${encodeURIComponent(itemA)}&itemB=${encodeURIComponent(itemB)}`);
-                    return await response.json();
-                } catch (e) {
-                    throw new Error('无法连接到合成API，请检查网络连接或CORS设置');
-                }
-            }
-        }
-        
-        // 记录合成结果
-        function recordSynthesis(a, b, result) {
-            // 修复自合成判断逻辑：只要合成素材之一为产物就是自合成
-            const isSelfSynthesis = (a === result || b === result);
-            
-            // 计算新深度
-            let newDepth;
-            if (initialElements.includes(a) && initialElements.includes(b)) {
-                newDepth = 1;
-            } else if (initialElements.includes(a) || initialElements.includes(b)) {
-                const nonInitialDepth = initialElements.includes(a) ? 
-                    synthesisData.items[b].depth : synthesisData.items[a].depth;
-                newDepth = nonInitialDepth + 1;
-            } else {
-                newDepth = Math.max(synthesisData.items[a].depth, synthesisData.items[b].depth) + 1;
-            }
-            
-            if (!synthesisData.items[result]) {
-                synthesisData.items[result] = {
-                    name: result,
-                    depth: newDepth,
-                    discovered: true,
-                    isSelfSynthesis: isSelfSynthesis
-                };
-            } else {
-                synthesisData.items[result].depth = Math.min(synthesisData.items[result].depth, newDepth);
-            }
-            
+
+            ensureItem(a);
+            ensureItem(b);
+            ensureItem(result); 
+
             // 检查是否已存在相同的配方
             const existingRecipe = synthesisData.recipes.find(recipe => 
-                (recipe.a === a && recipe.b === b && recipe.result === result) ||
-                (recipe.a === b && recipe.b === a && recipe.result === result)
+                ((recipe.a === a && recipe.b === b) || (recipe.a === b && recipe.b === a)) && recipe.result === result
             );
             
             if (!existingRecipe) {
-                synthesisData.recipes.push({ 
+                const newRecipe = { 
                     a, 
                     b, 
                     result,
                     isSelfSynthesis: isSelfSynthesis
-                });
+                };
+                synthesisData.recipes.push(newRecipe);
             }
+            // 注意: 在这个纯展示版本中，我们不再维护 exploredCombinations 和 pendingCombinations
+            // 因为没有自动遍历功能了
+        }
+        
+        // 重新计算所有元素的深度和层级 (使用 BFS)
+        function recalculateAllDepthsAndTiers() {
+            const queue = [];
             
-            // 保存数据
-            saveData();
-        }
-        
-        // 更新UI
-        function updateUI() {
-            try {
-                // 更新统计信息
-                document.getElementById('totalElements').textContent = Object.keys(synthesisData.items).length;
-                document.getElementById('totalRecipes').textContent = synthesisData.recipes.length;
-                
-                // 更新深度统计
-                updateDepthStats();
-                
-                // 更新合成树
-                updateTree();
-            } catch (error) {
-                console.error('更新UI时出错:', error);
-                showResult('更新界面时出现错误，请刷新页面重试', 'error');
-            }
-        }
-        
-        // 更新深度统计
-        function updateDepthStats() {
-            try {
-                const depthCounts = {};
-                
-                // 初始化深度计数
-                for (let i = 0; i <= 9; i++) {
-                    depthCounts[i] = 0;
+            // 1. 初始化所有元素的深度和层级
+            Object.values(synthesisData.items).forEach(item => {
+                if (initialElements.includes(item.name)) {
+                    item.depth = 0;
+                    item.tier = 0;
+                    queue.push(item.name); // 初始元素作为BFS的起点
+                } else {
+                    item.depth = Infinity; // 其他元素深度初始化为无穷大
+                    item.tier = Infinity;
                 }
-                
-                // 统计各深度元素数量
-                Object.values(synthesisData.items).forEach(item => {
-                    const depth = Math.min(item.depth, 9);
-                    depthCounts[depth] = (depthCounts[depth] || 0) + 1;
+            });
+
+            const visitedInBFS = new Set(queue); 
+
+            let head = 0;
+            while(head < queue.length) {
+                const currentItemName = queue[head++];
+                const currentDepth = synthesisData.items[currentItemName].depth;
+
+                // 遍历所有配方，寻找以当前元素为素材且能产生新产物的配方
+                synthesisData.recipes.forEach(recipe => {
+                    let productItemName = null;
+                    // 如果当前元素是配方A或B的素材，且不是自合成
+                    if ((recipe.a === currentItemName || recipe.b === currentItemName) && !recipe.isSelfSynthesis) {
+                         // 确保另一个素材也存在且深度已知（或已是初始元素）
+                        const otherMaterial = recipe.a === currentItemName ? recipe.b : recipe.a;
+                        if (synthesisData.items[otherMaterial] && synthesisData.items[otherMaterial].depth !== Infinity) {
+                            productItemName = recipe.result;
+                        }
+                    }
+                    
+                    if (productItemName && synthesisData.items[productItemName]) {
+                        // 新的深度是两个素材的最大深度 + 1
+                        const matADepth = synthesisData.items[recipe.a]?.depth || 0;
+                        const matBDepth = synthesisData.items[recipe.b]?.depth || 0;
+                        const newDepth = Math.max(matADepth, matBDepth) + 1;
+
+                        if (newDepth < synthesisData.items[productItemName].depth) {
+                            synthesisData.items[productItemName].depth = newDepth;
+                            synthesisData.items[productItemName].tier = newDepth; 
+                            if (!visitedInBFS.has(productItemName)) {
+                                queue.push(productItemName);
+                                visitedInBFS.add(productItemName);
+                            }
+                        }
+                    }
                 });
-                
-                // 渲染深度统计
-                let html = '';
-                for (let i = 0; i <= 9; i++) {
-                    if (depthCounts[i] > 0) {
-                        html += `<div class="depth-stat">深度 ${i}: <span class="depth-stat-value" style="color: ${depthColors[i]}">${depthCounts[i]}</span></div>`;
+            }
+
+            // 2. 额外处理自合成元素的深度和层级
+            // 自合成产物的深度是其素材的最大深度 + 1 (如果其本身不是初始元素)
+            synthesisData.recipes.forEach(recipe => {
+                if(recipe.isSelfSynthesis) {
+                    const depthA = synthesisData.items[recipe.a]?.depth || 0;
+                    const depthB = synthesisData.items[recipe.b]?.depth || 0;
+                    
+                    // 只有当产物存在且不是初始元素时才考虑通过自合成更新深度
+                    if (synthesisData.items[recipe.result] && !initialElements.includes(recipe.result)) {
+                         const potentialNewDepth = Math.max(depthA, depthB) + 1;
+                         synthesisData.items[recipe.result].depth = Math.min(synthesisData.items[recipe.result].depth, potentialNewDepth);
+                         synthesisData.items[recipe.result].tier = synthesisData.items[recipe.result].depth;
                     }
                 }
-                
-                depthStats.innerHTML = html;
-            } catch (error) {
-                console.error('更新深度统计时出错:', error);
-            }
+            });
+            
+            // 3. 确保所有没有被BFS访问到的元素 (例如，通过自合成才能得到的元素，或者死胡同) 有一个合理的默认深度
+            Object.values(synthesisData.items).forEach(item => {
+                if (item.depth === Infinity) {
+                    item.depth = 0; 
+                    item.tier = 0;
+                }
+            });
         }
         
-        // 更新合成树
-        function updateTree() {
-            try {
-                const treeContainer = document.getElementById('synthesisTree');
-                
-                // 构建树结构
-                const tree = buildSynthesisTree();
-                
-                // 渲染树
-                treeContainer.innerHTML = renderTree(tree);
-                
-                // 添加折叠展开事件
-                addToggleEvents();
-                
-                // 高亮搜索项
-                highlightSearchItems();
-            } catch (error) {
-                console.error('更新合成树时出错:', error);
-                const treeContainer = document.getElementById('synthesisTree');
-                treeContainer.innerHTML = `
-                    <div class="error">
-                        <i class="fas fa-exclamation-triangle"></i> 渲染合成树时出现错误，请尝试刷新页面
-                    </div>
-                `;
+        // 更新UI (移除了自动遍历相关的进度和计数器)
+        function updateUI() {
+            document.getElementById('totalElements').textContent = Object.keys(synthesisData.items).length;
+            document.getElementById('totalRecipes').textContent = synthesisData.recipes.length;
+            
+            // 移除了进度条更新逻辑
+            
+            updateTierStats();
+            updateTree();
+        }
+        
+        // 更新层级统计 (保持不变)
+        function updateTierStats() {
+            const tierCounts = {};
+            
+            for (let i = 0; i <= 9; i++) {
+                tierCounts[i] = 0;
             }
+            
+            Object.values(synthesisData.items).forEach(item => {
+                const tier = Math.min(item.tier, 9); 
+                tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+            });
+            
+            let html = '';
+            for (let i = 0; i <= 9; i++) {
+                if (tierCounts[i] > 0) {
+                    html += `<div class="tier-stat">层级 ${i}: <span class="tier-stat-value" style="color: ${tierColors[i]}">${tierCounts[i]}</span></div>`;
+                }
+            }
+            
+            tierStats.innerHTML = html;
+        }
+        
+        // 更新合成树 (保持不变)
+        function updateTree() {
+            const treeContainer = document.getElementById('synthesisTree');
+            
+            const tree = buildSynthesisTree();
+            
+            treeContainer.innerHTML = renderTree(tree);
+            
+            addToggleEvents();
+            highlightSearchItems();
         }
         
         // 构建合成树
         function buildSynthesisTree() {
-            try {
-                const tree = {};
-                const singleRecipeOnlyChecked = singleRecipeOnly.checked;
-                const searchTerm = treeSearch.value.trim().toLowerCase();
-                
-                // 首先添加初始元素
-                initialElements.forEach(element => {
-                    if (matchesFilters(element, searchTerm)) {
-                        tree[element] = {
-                            name: element,
-                            depth: 0,
-                            recipes: [],
-                            isInitial: true
-                        };
-                    }
-                });
-                
-                // 添加配方
-                synthesisData.recipes.forEach(recipe => {
-                    const resultDepth = synthesisData.items[recipe.result]?.depth || 999;
-                    
-                    // 检查是否匹配搜索条件
-                    const matches = matchesFilters(recipe.result, searchTerm);
-                    
-                    if (!matches) {
-                        return;
-                    }
-                    
-                    // 添加到树中
-                    if (!tree[recipe.result]) {
-                        tree[recipe.result] = {
-                            name: recipe.result,
-                            depth: resultDepth,
-                            recipes: []
-                        };
-                    }
-                    
-                    // 如果只显示一种合成方式，检查是否已经添加过配方
-                    if (singleRecipeOnlyChecked && tree[recipe.result].recipes.length > 0) {
-                        return;
-                    }
-                    
-                    // 添加配方
-                    tree[recipe.result].recipes.push({
-                        a: recipe.a,
-                        b: recipe.b,
-                        isSelfSynthesis: recipe.isSelfSynthesis
-                    });
-                });
-                
-                return tree;
-            } catch (error) {
-                console.error('构建合成树时出错:', error);
-                return {};
-            }
-        }
-        
-        // 检查元素是否匹配筛选条件
-        function matchesFilters(element, searchTerm) {
-            // 检查搜索条件
-            const matchesSearch = !searchTerm || element.toLowerCase().includes(searchTerm);
-            if (!matchesSearch) return false;
+            const tree = {};
+            const singleRecipeOnlyChecked = singleRecipeOnly.checked;
+            const searchTerm = treeSearch.value.trim().toLowerCase();
             
-            return true;
+            // 首先添加初始元素
+            initialElements.forEach(element => {
+                if (matchesFilters(element, searchTerm)) {
+                    tree[element] = {
+                        name: element,
+                        tier: 0,
+                        depth: 0,
+                        recipes: [],
+                        isInitial: true
+                    };
+                }
+            });
+            
+            // 添加配方
+            synthesisData.recipes.forEach(recipe => {
+                const resultItemData = synthesisData.items[recipe.result];
+                // 不显示深度为 Infinity 的元素及其配方（意味着无法通过非自合成路径达到）
+                if (!resultItemData || resultItemData.depth === Infinity) return; 
+                
+                const matches = matchesFilters(recipe.result, searchTerm);
+                if (!matches) {
+                    return;
+                }
+                
+                if (!tree[recipe.result]) {
+                    tree[recipe.result] = {
+                        name: recipe.result,
+                        tier: resultItemData.tier,
+                        depth: resultItemData.depth,
+                        recipes: []
+                    };
+                }
+                
+                // 计算路径深度 (这里会使用 MAX_DEPTH_FOR_SELF_SYNTHESIS 将自合成推后)
+                recipe.pathDepth = calculatePathDepth(recipe);
+                
+                tree[recipe.result].recipes.push(recipe);
+            });
+            
+            // 对每个产物的配方进行排序和过滤
+            Object.values(tree).forEach(item => {
+                if (item.recipes.length > 0) {
+                    // 1. 基础排序：非自合成优先，然后按路径深度从小到大排序，自合成永远排在最后
+                    item.recipes.sort((a, b) => {
+                        if (!a.isSelfSynthesis && b.isSelfSynthesis) return -1;
+                        if (a.isSelfSynthesis && !b.isSelfSynthesis) return 1;
+                        return a.pathDepth - b.pathDepth; 
+                    });
+                    
+                    // 2. 如果开启了单配方模式，应用过滤逻辑
+                    if (singleRecipeOnlyChecked) {
+                        const nonSelfSynthesisRecipes = item.recipes.filter(recipe => !recipe.isSelfSynthesis);
+                        
+                        if (nonSelfSynthesisRecipes.length > 0) {
+                            // 如果存在非自合成配方，则只保留 pathDepth 最小的非自合成配方，并**丢弃所有自合成配方**
+                            const minPathDepth = nonSelfSynthesisRecipes[0].pathDepth;
+                            item.recipes = nonSelfSynthesisRecipes.filter(recipe => recipe.pathDepth === minPathDepth);
+                        } else {
+                            // 如果全部是自合成配方，则只保留 pathDepth 最小的自合成配方
+                            item.recipes = [item.recipes[0]];
+                        }
+                    }
+                }
+            });
+            return tree;
         }
         
-        // 渲染树
+        // 检查元素是否匹配筛选条件 (保持不变)
+        function matchesFilters(element, searchTerm) {
+            const matchesSearch = !searchTerm || element.toLowerCase().includes(searchTerm);
+            return matchesSearch;
+        }
+        
+        // 渲染树 (保持不变)
         function renderTree(tree) {
             if (Object.keys(tree).length === 0) {
                 return `
                     <div class="empty-state">
                         <i class="fas fa-tree"></i>
                         <h3>暂无合成数据</h3>
-                        <p>开始合成以发现新的元素和配方</p>
+                        <p>导入数据或开始自动遍历以显示合成数据</p>
                     </div>
                 `;
             }
             
-            try {
-                let html = '<div class="tree-root">';
-                
-                // 按深度排序
-                const sortedItems = Object.values(tree).sort((a, b) => a.depth - b.depth);
-                
-                sortedItems.forEach(item => {
-                    html += renderTreeNode(item, 0, singleRecipeOnly.checked, new Set());
-                });
-                
-                html += '</div>';
-                return html;
-            } catch (error) {
-                console.error('渲染树时出错:', error);
-                return `
-                    <div class="error">
-                        <i class="fas fa-exclamation-triangle"></i> 渲染树结构时出现错误
-                    </div>
-                `;
-            }
+            let html = '<div class="tree-root">';
+            
+            // 按深度排序
+            const sortedItems = Object.values(tree).sort((a, b) => a.depth - b.depth);
+            
+            sortedItems.forEach(item => {
+                html += renderTreeNode(item, 0, singleRecipeOnly.checked, new Set());
+            });
+            
+            html += '</div>';
+            return html;
         }
         
         // 渲染树节点（递归）
         function renderTreeNode(node, level, singleRecipeOnlyFlag, visited) {
             // 避免无限递归
-            if (visited.has(node.name) || level > 20) {
+            if (visited.has(node.name) && level > 0) { 
                 return '';
             }
             
             const isInitial = initialElements.includes(node.name);
-            const depthClass = `depth-${Math.min(node.depth, 9)}`;
-            const hasRecipes = node.recipes && node.recipes.length > 0;
+            const tierClass = `tier-${Math.min(node.tier, 9)}`;
+            const hasRecipes = node.recipes.length > 0;
             const searchTerm = treeSearch.value.trim().toLowerCase();
             const isMatched = searchTerm && node.name.toLowerCase().includes(searchTerm);
             
             // 如果有搜索结果，自动展开节点
-            const shouldExpand = isMatched || level < 2;
+            const shouldExpand = isMatched || level < 1; 
             
-            let html = `<div class="tree-node ${shouldExpand ? 'expanded' : 'collapsed'}" data-name="${node.name}" data-depth="${node.depth}">`;
+            let html = `<div class="tree-node ${shouldExpand ? 'expanded' : 'collapsed'}" data-name="${node.name}" data-tier="${node.tier}" data-depth="${node.depth}">`;
             html += `<div class="node-content">`;
             
             if (hasRecipes) {
@@ -1176,23 +1080,37 @@
                 html += `<span class="node-expand" style="visibility: hidden;"></span>`;
             }
             
-            html += `<span class="item-node ${depthClass} ${isInitial ? 'initial-item' : ''}">${node.name}</span>`;
+            html += `<span class="item-node ${tierClass} ${isInitial ? 'initial-item' : ''}">${node.name}</span>`;
             html += `</div>`;
             
             if (hasRecipes) {
                 html += `<div class="children">`;
-                node.recipes.forEach(recipe => {
+                
+                // 这里直接使用 node.recipes，因为在 buildSynthesisTree 中已经根据 singleRecipeOnlyChecked 进行了过滤
+                let recipesToRender = [...node.recipes]; // 复制一份，避免修改原始数组
+                
+                recipesToRender.forEach(recipe => {
+                    // 确保素材按深度从小到大排序，以便一致显示
+                    let a = recipe.a;
+                    let b = recipe.b;
+                    const aDepth = synthesisData.items[a]?.depth || 0;
+                    const bDepth = synthesisData.items[b]?.depth || 0;
+                    
+                    if (aDepth > bDepth) {
+                        [a, b] = [b, a]; // 交换，使深度小的在前
+                    }
+                    
                     html += `<div class="recipe-item">`;
                     
                     if (recipe.isSelfSynthesis) {
-                        html += `<span class="item-node self-synthesis">${recipe.a}</span>`;
+                        html += `<span class="item-node self-synthesis">${a}</span>`;
                         html += `<span class="recipe-operator"> + </span>`;
-                        html += `<span class="item-node self-synthesis">${recipe.b}</span>`;
-                        html += ` <span style="color: #f44336; font-size: 0.8rem;">(自合成)</span>`;
+                        html += `<span class="item-node self-synthesis">${b}</span>`;
+                        html += ` <span style="color: var(--danger); font-size: 0.8rem;">(自合成)</span>`;
                     } else {
-                        html += `<span class="item-node">${recipe.a}</span>`;
+                        html += `<span class="item-node">${a}</span>`;
                         html += `<span class="recipe-operator"> + </span>`;
-                        html += `<span class="item-node">${recipe.b}</span>`;
+                        html += `<span class="item-node">${b}</span>`;
                     }
                     
                     html += `</div>`;
@@ -1201,25 +1119,27 @@
                     const newVisited = new Set(visited);
                     newVisited.add(node.name);
                     
-                    // 在单配方模式下，确保两个合成素材都显示合成方式
-                    if (synthesisData.items[recipe.a] && !initialElements.includes(recipe.a) && !visited.has(recipe.a)) {
-                        const childRecipes = getRecipesForElement(recipe.a, singleRecipeOnlyFlag);
+                    // 两个素材都要能展开并递归
+                    if (synthesisData.items[a] && !initialElements.includes(a) && !newVisited.has(a)) {
+                        const childRecipes = getRecipesForElement(a, singleRecipeOnlyFlag); 
                         if (childRecipes.length > 0) {
                             html += renderTreeNode({
-                                name: recipe.a,
-                                depth: synthesisData.items[recipe.a].depth,
+                                name: a,
+                                tier: synthesisData.items[a].tier,
+                                depth: synthesisData.items[a].depth,
                                 recipes: childRecipes,
                                 isInitial: false
                             }, level + 1, singleRecipeOnlyFlag, newVisited);
                         }
                     }
                     
-                    if (synthesisData.items[recipe.b] && !initialElements.includes(recipe.b) && !visited.has(recipe.b)) {
-                        const childRecipes = getRecipesForElement(recipe.b, singleRecipeOnlyFlag);
+                    if (synthesisData.items[b] && !initialElements.includes(b) && !newVisited.has(b)) {
+                        const childRecipes = getRecipesForElement(b, singleRecipeOnlyFlag);
                         if (childRecipes.length > 0) {
                             html += renderTreeNode({
-                                name: recipe.b,
-                                depth: synthesisData.items[recipe.b].depth,
+                                name: b,
+                                tier: synthesisData.items[b].tier,
+                                depth: synthesisData.items[b].depth,
                                 recipes: childRecipes,
                                 isInitial: false
                             }, level + 1, singleRecipeOnlyFlag, newVisited);
@@ -1232,61 +1152,52 @@
             return html;
         }
         
-        // 获取元素的配方（考虑单配方模式）
+        // 获取元素的配方（考虑单配方模式和自合成排除）
         function getRecipesForElement(elementName, singleRecipeOnlyFlag) {
-            const recipes = synthesisData.recipes.filter(recipe => recipe.result === elementName);
+            let recipes = synthesisData.recipes.filter(recipe => recipe.result === elementName);
+            
+            // 计算每个配方的路径深度
+            recipes.forEach(recipe => {
+                recipe.pathDepth = calculatePathDepth(recipe);
+            });
+            
+            // 排序：非自合成优先，然后按路径深度从小到大排序，自合成永远排在最后
+            recipes.sort((a, b) => {
+                if (!a.isSelfSynthesis && b.isSelfSynthesis) return -1;
+                if (a.isSelfSynthesis && !b.isSelfSynthesis) return 1;
+                return a.pathDepth - b.pathDepth;
+            });
             
             if (singleRecipeOnlyFlag && recipes.length > 0) {
-                // 优先选择非自合成配方
                 const nonSelfSynthesis = recipes.filter(recipe => !recipe.isSelfSynthesis);
-                
                 if (nonSelfSynthesis.length > 0) {
-                    // 返回深度最小的非自合成配方
-                    let minDepth = Infinity;
-                    let bestRecipe = null;
-                    
-                    for (const recipe of nonSelfSynthesis) {
-                        const depthA = synthesisData.items[recipe.a]?.depth || Infinity;
-                        const depthB = synthesisData.items[recipe.b]?.depth || Infinity;
-                        const depth = Math.max(depthA, depthB);
-                        
-                        if (depth < minDepth) {
-                            minDepth = depth;
-                            bestRecipe = recipe;
-                        }
-                    }
-                    
-                    return bestRecipe ? [bestRecipe] : [];
+                    // 如果存在非自合成配方，则只保留 pathDepth 最小的非自合成配方
+                    const minPathDepth = nonSelfSynthesis[0].pathDepth;
+                    return nonSelfSynthesis.filter(recipe => recipe.pathDepth === minPathDepth);
                 } else {
-                    // 如果没有非自合成配方，返回自合成配方
+                    // 如果全部是自合成配方，则只保留 pathDepth 最小的自合成配方
                     return [recipes[0]];
                 }
             }
             
-            return recipes;
+            return recipes; 
         }
         
-        // 添加折叠展开事件
+        // 添加折叠展开事件 (保持不变)
         function addToggleEvents() {
             const nodeContents = document.querySelectorAll('.node-content');
             nodeContents.forEach(content => {
-                // 先移除可能存在的旧事件监听器
-                content.removeEventListener('click', toggleNode);
-                // 添加新的事件监听器
-                content.addEventListener('click', toggleNode);
+                content.addEventListener('click', function() {
+                    const treeNode = this.parentElement;
+                    if (treeNode.querySelector('.children')) {
+                        treeNode.classList.toggle('expanded');
+                        treeNode.classList.toggle('collapsed');
+                    }
+                });
             });
         }
         
-        // 切换节点展开/折叠
-        function toggleNode() {
-            const treeNode = this.parentElement;
-            if (treeNode.querySelector('.children')) {
-                treeNode.classList.toggle('expanded');
-                treeNode.classList.toggle('collapsed');
-            }
-        }
-        
-        // 高亮搜索项
+        // 高亮搜索项 (保持不变)
         function highlightSearchItems() {
             const searchTerm = treeSearch.value.trim().toLowerCase();
             if (!searchTerm) return;
@@ -1297,7 +1208,6 @@
                 if (itemText.includes(searchTerm)) {
                     item.classList.add('highlight');
                     
-                    // 自动展开包含匹配项的节点
                     let parent = item.closest('.tree-node');
                     while (parent) {
                         parent.classList.add('expanded');
@@ -1310,7 +1220,7 @@
             });
         }
         
-        // 全部折叠
+        // 全部折叠 (保持不变)
         function collapseAll() {
             const treeNodes = document.querySelectorAll('.tree-node');
             treeNodes.forEach(node => {
@@ -1319,7 +1229,7 @@
             });
         }
         
-        // 全部展开
+        // 全部展开 (保持不变)
         function expandAll() {
             const treeNodes = document.querySelectorAll('.tree-node');
             treeNodes.forEach(node => {
@@ -1328,176 +1238,198 @@
             });
         }
         
-        // 显示结果
+        // 显示结果 (保持不变)
         function showResult(message, type) {
-            const resultBox = document.getElementById('manualResult');
-            resultBox.innerHTML = `<div class="${type}"><i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> ${message}</div>`;
+            // 移除了 manualResult 的 DOM 元素，所以需要一个通用的结果显示区域
+            // 或者暂时只 console.log 错误/成功信息
+            console.log(`[${type.toUpperCase()}] ${message}`); 
+            // 如果希望在UI上显示，需要添加一个通用的消息框元素
         }
         
-        // 导出数据
+        // 导出数据 (更新为压缩和优化数据结构)
         function exportData() {
-            if (isProcessing) return;
+            const exportableData = {
+                initialElements: initialElements, 
+                items: Array.from(discoveredItems), 
+                recipes: synthesisData.recipes.map(r => ({
+                    a: r.a,
+                    b: r.b,
+                    result: r.result,
+                    isSelfSynthesis: r.isSelfSynthesis 
+                }))
+            };
+
+            const dataStr = JSON.stringify(exportableData);
+            const compressedData = LZString.compressToBase64(dataStr); 
+
+            const dataBlob = new Blob([compressedData], {type: 'text/plain'}); 
             
-            isProcessing = true;
-            exportBtn.classList.add('btn-disabled');
-            
-            try {
-                const dataStr = JSON.stringify(synthesisData, null, 2);
-                const dataBlob = new Blob([dataStr], {type: 'application/json'});
-                
-                const url = URL.createObjectURL(dataBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'synthesis-data.json';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                showResult('数据导出成功', 'success');
-            } catch (error) {
-                console.error('导出数据时出错:', error);
-                showResult('导出数据时出现错误', 'error');
-            } finally {
-                isProcessing = false;
-                exportBtn.classList.remove('btn-disabled');
-            }
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `synthesis-data-${new Date().toISOString().slice(0,10)}.lzjson`; 
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showResult('数据已导出并压缩！', 'success');
         }
         
-        // 导入数据
+        // 导入数据 (更新为解压缩和重建数据结构)
         function importData(event) {
-            if (isProcessing) return;
-            
             const file = event.target.files[0];
             if (!file) return;
-            
-            isProcessing = true;
-            importBtn.classList.add('btn-disabled');
-            importBtn.innerHTML = '<i class="fas fa-spinner loading"></i> 导入中...';
             
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const importedData = JSON.parse(e.target.result);
+                    const compressedData = e.target.result;
+                    const decompressedData = LZString.decompressFromBase64(compressedData); // 解压缩
+
+                    if (!decompressedData) {
+                        throw new Error('解压缩失败，可能不是有效的压缩数据或数据损坏');
+                    }
+
+                    const importedRawData = JSON.parse(decompressedData);
                     
                     // 验证数据格式
-                    if (importedData.items && importedData.recipes) {
-                        synthesisData = importedData;
+                    if (importedRawData.items && importedRawData.recipes) {
+                        synthesisData = { items: {}, recipes: [] }; 
+                        discoveredItems.clear(); 
+                        
+                        // 重新构建 items map
+                        importedRawData.items.forEach(itemName => {
+                            synthesisData.items[itemName] = {
+                                name: itemName,
+                                tier: initialElements.includes(itemName) ? 0 : Infinity,
+                                depth: initialElements.includes(itemName) ? 0 : Infinity,
+                                discovered: true
+                            };
+                            discoveredItems.add(itemName); 
+                        });
+
+                        // 重新构建 recipes，并处理 isSelfSynthesis
+                        synthesisData.recipes = importedRawData.recipes.map(r => {
+                            // 确保 isSelfSynthesis 属性存在
+                            if (r.isSelfSynthesis === undefined) {
+                                r.isSelfSynthesis = (r.a === r.result || r.b === r.result);
+                            }
+                            return r;
+                        });
+
+                        // 重新计算所有元素的深度和层级，以确保一致性
+                        recalculateAllDepthsAndTiers();
+                        
                         saveData();
                         updateUI();
-                        showResult('数据导入成功', 'success');
+                        showResult('数据导入成功并已解压缩！', 'success');
                     } else {
-                        showResult('数据格式不正确', 'error');
+                        throw new Error('导入数据格式不正确');
                     }
                 } catch (error) {
-                    console.error('导入数据时出错:', error);
+                    console.error('导入失败:', error);
                     showResult('导入失败: ' + error.message, 'error');
-                } finally {
-                    isProcessing = false;
-                    importBtn.classList.remove('btn-disabled');
-                    importBtn.innerHTML = '<i class="fas fa-upload"></i> 导入数据';
-                    // 重置文件输入，允许再次选择同一文件
-                    event.target.value = '';
                 }
             };
             
-            reader.onerror = function() {
-                showResult('读取文件时出错', 'error');
-                isProcessing = false;
-                importBtn.classList.remove('btn-disabled');
-                importBtn.innerHTML = '<i class="fas fa-upload"></i> 导入数据';
-            };
-            
-            reader.readAsText(file);
+            reader.readAsText(file); 
+            event.target.value = ''; 
         }
         
         // 重置数据
         function resetData() {
-            if (isProcessing) return;
-            
             if (confirm('确定要重置所有数据吗？这将清除所有已发现的合成路径。')) {
-                isProcessing = true;
-                resetBtn.classList.add('btn-disabled');
-                
-                try {
-                    synthesisData = {
-                        items: {},
-                        recipes: []
-                    };
-                    
-                    // 重新添加初始元素
-                    initialElements.forEach(element => {
-                        synthesisData.items[element] = {
-                            name: element,
-                            depth: 0,
-                            discovered: true
-                        };
-                    });
-                    
-                    saveData();
-                    updateUI();
-                    showResult('数据已重置', 'success');
-                } catch (error) {
-                    console.error('重置数据时出错:', error);
-                    showResult('重置数据时出现错误', 'error');
-                } finally {
-                    isProcessing = false;
-                    resetBtn.classList.remove('btn-disabled');
-                }
-            }
-        }
-        
-        // 保存数据到本地存储
-        function saveData() {
-            try {
-                localStorage.setItem('synthesisData', JSON.stringify(synthesisData));
-            } catch (error) {
-                console.error('保存数据到本地存储时出错:', error);
-                showResult('保存数据时出现错误', 'error');
-            }
-        }
-        
-        // 从本地存储加载数据
-        function loadData() {
-            try {
-                const saved = localStorage.getItem('synthesisData');
-                if (saved) {
-                    synthesisData = JSON.parse(saved);
-                    // 确保初始元素存在
-                    initialElements.forEach(element => {
-                        if (!synthesisData.items[element]) {
-                            synthesisData.items[element] = {
-                                name: element,
-                                depth: 0,
-                                discovered: true
-                            };
-                        }
-                    });
-                } else {
-                    // 如果没有保存的数据，初始化初始元素
-                    initialElements.forEach(element => {
-                        synthesisData.items[element] = {
-                            name: element,
-                            depth: 0,
-                            discovered: true
-                        };
-                    });
-                }
-            } catch (e) {
-                console.error('加载保存的数据失败:', e);
-                // 如果加载失败，使用默认数据
                 synthesisData = {
                     items: {},
                     recipes: []
                 };
+                discoveredItems.clear();
+                
+                // 重新添加初始元素
                 initialElements.forEach(element => {
                     synthesisData.items[element] = {
                         name: element,
+                        tier: 0,
                         depth: 0,
                         discovered: true
                     };
+                    discoveredItems.add(element);
                 });
+                
+                saveData();
+                updateUI();
+                showResult('数据已重置', 'success');
             }
+        }
+        
+        // 保存数据到本地存储 (更新为压缩)
+        function saveData() {
+            const saveableData = {
+                items: synthesisData.items, 
+                recipes: synthesisData.recipes 
+            };
+            const dataStr = JSON.stringify(saveableData);
+            const compressedData = LZString.compressToBase64(dataStr);
+            localStorage.setItem('synthesisData', compressedData);
+        }
+        
+        // 从本地存储加载数据 (更新为解压缩和重建)
+        function loadData() {
+            const savedCompressed = localStorage.getItem('synthesisData');
+            if (savedCompressed) {
+                try {
+                    const decompressedData = LZString.decompressFromBase64(savedCompressed);
+                    if (!decompressedData) {
+                        throw new Error('解压缩本地存储数据失败，数据可能已损坏');
+                    }
+                    const loadedData = JSON.parse(decompressedData);
+                    
+                    if (loadedData.items && loadedData.recipes) {
+                        synthesisData.items = loadedData.items;
+                        synthesisData.recipes = loadedData.recipes;
+
+                        // 重新构建 discoveredItems 
+                        discoveredItems.clear();
+                        Object.keys(synthesisData.items).forEach(itemName => {
+                            if (synthesisData.items[itemName].discovered) {
+                                discoveredItems.add(itemName);
+                            }
+                        });
+                        synthesisData.recipes.forEach(recipe => {
+                            // 确保 isSelfSynthesis 属性存在
+                            if (recipe.isSelfSynthesis === undefined) {
+                                recipe.isSelfSynthesis = (recipe.a === recipe.result || recipe.b === recipe.result);
+                            }
+                        });
+
+                        // 重新计算所有元素的深度和层级，以确保与新的 calculatePathDepth 逻辑一致
+                        recalculateAllDepthsAndTiers();
+
+                    } else {
+                        throw new Error('本地存储数据格式不正确');
+                    }
+                } catch (e) {
+                    console.error('加载本地保存数据失败:', e);
+                    // 如果加载失败，重置为默认数据
+                    synthesisData = { items: {}, recipes: [] }; 
+                }
+            } else {
+                // 如果没有保存的数据，初始化
+                synthesisData = { items: {}, recipes: [] }; 
+            }
+
+            // 确保初始元素存在并设置正确深度
+            initialElements.forEach(element => {
+                if (!synthesisData.items[element]) {
+                    synthesisData.items[element] = { name: element, tier: 0, depth: 0, discovered: true };
+                } else {
+                    synthesisData.items[element].tier = 0;
+                    synthesisData.items[element].depth = 0;
+                }
+                // 确保初始元素在 discoveredItems 中
+                discoveredItems.add(element); 
+            });
         }
         
         // 初始化应用
