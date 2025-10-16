@@ -839,7 +839,7 @@
                             <i class="fas fa-trash-alt"></i> 重置数据
                         </button>
                     </div>
-                    <input type="file" id="importFile" accept=".json,.lzjson" style="display: none;">
+                    <input type="file" id="importFile" accept=".txt" style="display: none;">
                 </div>
 
                 <div class="panel">
@@ -905,10 +905,10 @@
                         <div class="toggle-group">
                             <label class="toggle-label">
                                 <div class="toggle-switch">
-                                    <input type="checkbox" id="shortestPathOnly" checked>
+                                    <input type="checkbox" id="singleRecipeMode" checked>
                                     <span class="toggle-slider"></span>
                                 </div>
-                                最短路径模式
+                                每个元素只显示一种合成方式
                             </label>
                         </div>
                     </div>
@@ -978,7 +978,7 @@
               totalElementsSpan = D('totalElements'), totalRecipesSpan = D('totalRecipes'),
               pendingCombinationsSpan = D('pendingCombinations'),
               progressBar = D('progressBar'), progressText = D('progressText'), progressPercent = D('progressPercent'),
-              shortestPathOnly = D('shortestPathOnly'), searchInput = D('searchInput'),
+              singleRecipeMode = D('singleRecipeMode'), searchInput = D('searchInput'),
               collapseAllBtn = D('collapseAllBtn'), expandAllBtn = D('expandAllBtn'),
               tierStats = D('tierStats'), synthesisTree = D('synthesisTree'), treeContainer = D('treeContainer'),
               viewRecipesBtn = D('viewRecipesBtn'), recipeModal = D('recipeModal'),
@@ -986,7 +986,8 @@
               closeModalBtn2 = D('closeModalBtn2'), exportRecipesBtn = D('exportRecipesBtn');
 
         function init() {
-            initializeData();
+            // 尝试从localStorage加载数据
+            loadFromLocalStorage();
             updateUI();
             addEventListeners();
             log('系统初始化完成', 'success');
@@ -1000,7 +1001,7 @@
             importBtn.addEventListener('click', () => importFile.click());
             importFile.addEventListener('change', importData);
             resetBtn.addEventListener('click', resetData);
-            shortestPathOnly.addEventListener('change', updateAndRenderTree);
+            singleRecipeMode.addEventListener('change', updateAndRenderTree);
             collapseAllBtn.addEventListener('click', () => toggleAllNodes(false));
             expandAllBtn.addEventListener('click', () => toggleAllNodes(true));
             searchInput.addEventListener('input', applySearchFilter);
@@ -1089,6 +1090,9 @@
                     FSet.add(newCombination);
                 }
             }
+            
+            // 保存到localStorage
+            saveToLocalStorage();
             return true;
         }
 
@@ -1221,17 +1225,12 @@
                 }
             });
 
-            // 如果启用了最短路径模式，则过滤配方
-            if (shortestPathOnly.checked) {
+            // 如果启用了单配方模式，则只显示一种合成方式
+            if (singleRecipeMode.checked) {
                 Object.values(tree).forEach(node => {
-                    if (node.recipes.length > 1) {
-                        // 找到最短路径的配方
-                        const minDepth = Math.min(...node.recipes.map(r => 
-                            Math.max(tree[r.a].depth, tree[r.b].depth)
-                        ));
-                        node.recipes = node.recipes.filter(r => 
-                            Math.max(tree[r.a].depth, tree[r.b].depth) === minDepth
-                        );
+                    if (node.recipes.length > 0) {
+                        // 只保留第一个配方
+                        node.recipes = [node.recipes[0]];
                     }
                 });
             }
@@ -1475,6 +1474,8 @@
             let maxTier = 0;
             Object.values(ElementID).forEach(id => {
                 const tier = getElementDepth(id);
+                // 跳过T0的统计
+                if (tier === 0) return;
                 counts[tier] = (counts[tier] || 0) + 1;
                 maxTier = Math.max(maxTier, tier);
             });
@@ -1523,13 +1524,44 @@
         }
         
         // --- Data I/O & Utils ---
+        function saveToLocalStorage() {
+            const dataStr = JSON.stringify({ ElementID, AllRules, CanonicalPath, currentId });
+            const compressed = LZString.compressToBase64(dataStr);
+            localStorage.setItem('synthesis-data', compressed);
+        }
+        
+        function loadFromLocalStorage() {
+            const compressed = localStorage.getItem('synthesis-data');
+            if (compressed) {
+                try {
+                    const decompressed = LZString.decompressFromBase64(compressed);
+                    const imported = JSON.parse(decompressed);
+                    if (!imported.ElementID || !imported.AllRules) throw new Error('本地存储数据格式不正确');
+                    
+                    ElementID = imported.ElementID;
+                    AllRules = imported.AllRules;
+                    CanonicalPath = imported.CanonicalPath || {};
+                    currentId = imported.currentId || Math.max(...Object.values(ElementID)) + 1;
+                    
+                    initializeFSet();
+                    updateAndRenderTree();
+                    log(`从本地存储加载数据成功: ${Object.keys(ElementID).length}个元素, ${AllRules.length}条规则`, 'success');
+                } catch (error) {
+                    log(`从本地存储加载数据失败: ${error.message}，使用默认初始化`, 'error');
+                    initializeData();
+                }
+            } else {
+                initializeData();
+            }
+        }
+        
         function exportData() {
             const dataStr = JSON.stringify({ ElementID, AllRules, CanonicalPath, currentId });
             const compressed = LZString.compressToBase64(dataStr);
             const blob = new Blob([compressed], { type: 'text/plain' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `synthesis-data-${new Date().toISOString().slice(0,10)}.lzjson`;
+            a.download = `synthesis-data-${new Date().toISOString().slice(0,10)}.txt`;
             a.click();
             URL.revokeObjectURL(a.href);
             log('数据导出成功', 'success');
@@ -1552,6 +1584,7 @@
                     
                     initializeFSet();
                     updateAndRenderTree();
+                    saveToLocalStorage();
                     log(`数据导入成功: ${Object.keys(ElementID).length}个元素, ${AllRules.length}条规则`, 'success');
                 } catch (error) {
                     log(`导入失败: ${error.message}`, 'error');
@@ -1566,6 +1599,7 @@
             if (confirm('确定要重置所有数据吗？')) {
                 initializeData();
                 updateAndRenderTree();
+                saveToLocalStorage();
                 log('数据已重置', 'success');
             }
         }
