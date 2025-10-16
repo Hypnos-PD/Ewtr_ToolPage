@@ -12,23 +12,14 @@
             --primary-light: #4caf50;
             --primary-dark: #1b3a1b;
             --secondary: #37474f;
-            --secondary-light: #546e7a;
-            --secondary-dark: #263238;
             --accent: #ff9800;
-            --accent-light: #ffb74d;
-            --accent-dark: #f57c00;
-            --success: #4caf50;
-            --warning: #ffb74d;
-            --danger: #f44336;
             --surface: #121212;
             --surface-light: #1e1e1e;
             --surface-dark: #0a0a0a;
             --text-primary: #e0e0e0;
             --text-secondary: #b0b0b0;
-            --text-light: #757575;
             --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
             --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-            --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
             --radius: 8px;
             --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
@@ -45,126 +36,112 @@
             color: var(--text-primary);
             background: linear-gradient(135deg, #0a0a0a 0%, #1b3a1b 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
         
         .container {
-            max-width: 1600px;
+            max-width: 1200px;
             margin: 0 auto;
             background-color: var(--surface-light);
             border-radius: 12px;
-            box-shadow: var(--shadow-3);
+            box-shadow: var(--shadow-2);
             overflow: hidden;
             border: 1px solid var(--primary-dark);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 30px);
         }
         
         header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
-            padding: 25px 30px;
+            padding: 20px;
             text-align: center;
             position: relative;
-            overflow: hidden;
-        }
-        
-        header::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
-            background-size: cover;
         }
         
         h1 {
-            font-size: 2.2rem;
-            margin-bottom: 8px;
+            font-size: 1.8rem;
             font-weight: 700;
-            position: relative;
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 0;
-            height: 80vh;
-        }
-        
-        @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                height: auto;
-            }
-        }
-        
-        .left-panel {
-            background-color: var(--surface);
-            padding: 25px;
-            border-right: 1px solid var(--surface-dark);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
-        }
-        
-        .right-panel {
-            padding: 25px;
-            background-color: var(--surface-light);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow: hidden;
-        }
-        
-        .panel {
-            background-color: var(--surface);
-            border-radius: var(--radius);
-            padding: 22px;
-            box-shadow: var(--shadow-1);
-            border: 1px solid var(--primary-dark);
-            transition: var(--transition);
-        }
-        
-        .panel:hover {
-            box-shadow: var(--shadow-2);
-        }
-        
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--primary-dark);
-        }
-        
-        .panel-header-controls {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .panel-icon {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 12px;
-            font-size: 1.1rem;
-            box-shadow: var(--shadow-1);
+            gap: 10px;
         }
         
-        .panel h2 {
-            color: var(--text-primary);
-            font-size: 1.4rem;
-            font-weight: 600;
+        .main-content {
             display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        
+        .controls-panel {
+            background-color: var(--surface);
+            padding: 15px;
+            border-bottom: 1px solid var(--surface-dark);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
             align-items: center;
+        }
+        
+        .stats-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: var(--radius);
+            text-align: center;
+            box-shadow: var(--shadow-1);
+            min-width: 100px;
+        }
+        
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+        
+        .search-container {
+            position: relative;
+            flex-grow: 1;
+            max-width: 300px;
+        }
+        
+        .search-container i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        
+        .search-container input {
+            padding-left: 40px;
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--primary-dark);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: var(--surface-light);
+            color: var(--text-primary);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
         }
         
         button {
@@ -172,9 +149,9 @@
             color: white;
             border: none;
             cursor: pointer;
-            padding: 12px 15px;
+            padding: 10px 15px;
             border-radius: var(--radius);
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -194,208 +171,21 @@
         }
         
         button.accent {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            background: linear-gradient(135deg, var(--accent) 0%, #e65100 100%);
         }
-        
-        button.secondary {
-            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 15px;
-        }
-        
-        .button-group button {
-            flex: 1;
-        }
-        
-        .input-group {
-            margin-bottom: 18px;
-        }
-        
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-        
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: var(--transition);
-            background-color: var(--surface-light);
-            color: var(--text-primary);
-        }
-        
-        .input-group input:focus, .input-group select:focus {
-            outline: none;
-            border-color: var(--primary-light);
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-        }
-        
-        .toggle-group {
-            display: flex;
-            align-items: center;
-            margin: 15px 0;
-            position: relative;
-        }
-        
-        .toggle-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-        
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-            margin-right: 10px;
-        }
-        
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--surface-dark);
-            transition: var(--transition);
-            border-radius: 34px;
-        }
-        
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: var(--transition);
-            border-radius: 50%;
-        }
-        
-        input:checked + .toggle-slider {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        }
-        
-        input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
-        
-        .log-output {
-            background-color: var(--surface-dark);
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
-            padding: 15px;
-            height: 200px;
-            overflow-y: auto;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.9rem;
-            margin-top: 15px;
-        }
-        
-        .log-entry {
-            margin-bottom: 5px;
-            padding: 5px;
-            border-radius: 4px;
-        }
-        
-        .log-entry.success {
-            background-color: rgba(76, 175, 80, 0.1);
-            color: var(--success);
-            border-left: 3px solid var(--success);
-        }
-        
-        .log-entry.error {
-            background-color: rgba(244, 67, 54, 0.1);
-            color: var(--danger);
-            border-left: 3px solid var(--danger);
-        }
-        
-        .log-entry.info {
-            background-color: rgba(33, 150, 243, 0.1);
-            color: #2196f3;
-            border-left: 3px solid #2196f3;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 15px;
-            border-radius: var(--radius);
-            text-align: center;
-            box-shadow: var(--shadow-1);
-        }
-        
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 0.85rem;
-            opacity: 0.9;
-        }
-        
         
         .tree-container {
             flex-grow: 1;
             overflow: auto;
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
-            padding: 15px;
             background-color: var(--surface-dark);
-            margin-top: 15px;
             position: relative;
-            width: 100%;
-            height: 400px; 
         }
         
-        
-        .tree-container.fullscreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1000;
-            padding: 20px;
-            border-radius: 0;
-        }
-        
-        /* 结构样式 */
         .tree {
             font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.95rem;
-            width: max-content;
+            font-size: 0.9rem;
             min-width: 100%;
-            position: relative;
+            padding: 15px;
         }
         
         .tree-node {
@@ -407,46 +197,36 @@
             display: flex;
             align-items: center;
             cursor: pointer;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: var(--radius);
             background-color: var(--surface);
             border: 1px solid var(--primary-dark);
             transition: var(--transition);
-            position: relative;
-            z-index: 2;
             width: fit-content;
         }
         
         .node-content:hover {
             background-color: var(--surface-light);
-            box-shadow: var(--shadow-1);
         }
         
         .node-content.highlight {
-            background-color: var(--accent-dark);
+            background-color: var(--accent);
             color: white;
             font-weight: bold;
-            box-shadow: 0 0 0 2px var(--accent);
         }
         
         .node-expand {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            margin-right: 8px;
-            font-size: 0.8rem;
+            margin-right: 6px;
+            font-size: 0.7rem;
             color: var(--primary-light);
             background-color: var(--surface);
             border-radius: 50%;
             border: 1px solid var(--primary);
-            transition: var(--transition);
-        }
-        
-        .node-expand:hover {
-            background-color: var(--primary);
-            color: white;
         }
         
         .node-expand::before {
@@ -463,9 +243,9 @@
         }
         
         .children {
-            padding-left: 30px;
+            padding-left: 25px;
             position: relative;
-            margin-top: 8px;
+            margin-top: 5px;
         }
         
         .children::before {
@@ -473,18 +253,17 @@
             position: absolute;
             top: 0;
             bottom: 0;
-            left: 15px;
+            left: 12px;
             width: 1px;
             background-color: var(--primary-dark);
-            z-index: 1;
         }
         
         .recipe-path {
             display: flex;
             align-items: center;
-            margin: 8px 0;
+            margin: 5px 0;
             position: relative;
-            padding-left: 10px;
+            padding-left: 8px;
         }
         
         .recipe-path::before {
@@ -492,7 +271,7 @@
             position: absolute;
             top: 50%;
             left: 0;
-            width: 10px;
+            width: 8px;
             height: 1px;
             background-color: var(--primary-dark);
         }
@@ -501,8 +280,8 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            padding: 5px 10px;
-            background-color: var(--surface-dark);
+            padding: 4px 8px;
+            background-color: var(--surface);
             border-radius: var(--radius);
             border: 1px solid var(--primary-dark);
         }
@@ -510,30 +289,22 @@
         .recipe-connector {
             display: flex;
             align-items: center;
-            gap: 5px;
-            margin: 0 5px;
+            gap: 3px;
+            margin: 0 3px;
             color: var(--text-secondary);
-        }
-        
-        .recipe-connector i {
             font-size: 0.8rem;
         }
         
         .recipe-ingredient {
-            padding: 3px 8px;
-            background-color: var(--surface);
+            padding: 2px 6px;
+            background-color: var(--surface-light);
             border-radius: 4px;
             border: 1px solid var(--primary-dark);
-            transition: var(--transition);
             cursor: pointer;
         }
         
-        .recipe-ingredient:hover {
-            background-color: var(--surface-light);
-        }
-        
         .recipe-ingredient.highlight {
-            background-color: var(--accent-dark);
+            background-color: var(--accent);
             color: white;
             font-weight: bold;
         }
@@ -544,124 +315,43 @@
             color: white;
         }
         
-        .search-container {
-            position: relative;
-            margin-bottom: 15px;
-        }
-        
-        .search-container i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-light);
-        }
-        
-        .search-container input {
-            padding-left: 45px;
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: var(--transition);
-            background-color: var(--surface-light);
-            color: var(--text-primary);
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-secondary);
-        }
-        
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: var(--primary-dark);
-        }
-        
-        .empty-state h3 {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-            color: var(--text-primary);
-        }
-        
-        .collapse-expand-btn {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            box-shadow: var(--shadow-1);
-        }
-        
-        .collapse-expand-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-2);
-        }
-        
-        .tree-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .tree-controls .toggle-group {
-            margin: 0;
-        }
-        
         .tree.search-active .tree-node.is-hidden {
             display: none;
         }
         
-        .tree.search-active .tree-node.is-match > .node-content {
-            background-color: var(--accent-dark);
+        .fullscreen-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
             color: white;
-            font-weight: bold;
-        }
-        
-        .tree.search-active .tree-node.is-ancestor > .node-content {
-            background-color: rgba(255, 152, 0, 0.2);
-        }
-        
-        .tier-stats {
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
         }
         
-        .tier-stat {
-            padding: 5px 10px;
-            background-color: var(--surface-dark);
-            border-radius: var(--radius);
-            border: 1px solid var(--primary-dark);
-            font-size: 0.85rem;
+        .fullscreen-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
         }
         
-        .tier-stat-value {
-            font-weight: bold;
-            color: var(--primary-light);
+        .tree-container.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1000;
+            background: var(--surface-dark);
         }
         
-        .tree-node.initial-element {
-            margin-bottom: 15px;
-        }
-        
-        .tree-root {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        /* 模态框样式 */
         .modal {
             display: none;
             position: fixed;
@@ -678,12 +368,12 @@
         .modal-content {
             background-color: var(--surface);
             border-radius: var(--radius);
-            padding: 25px;
+            padding: 20px;
             width: 90%;
-            max-width: 800px;
+            max-width: 600px;
             max-height: 80vh;
             overflow-y: auto;
-            box-shadow: var(--shadow-3);
+            box-shadow: var(--shadow-2);
             border: 1px solid var(--primary-dark);
         }
         
@@ -691,14 +381,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
             border-bottom: 1px solid var(--primary-dark);
         }
         
         .modal-header h2 {
             color: var(--text-primary);
-            font-size: 1.5rem;
+            font-size: 1.3rem;
         }
         
         .close-btn {
@@ -710,18 +400,14 @@
             padding: 5px;
         }
         
-        .close-btn:hover {
-            color: var(--accent);
-        }
-        
         .recipe-list {
             max-height: 400px;
             overflow-y: auto;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         .recipe-item {
-            padding: 10px;
+            padding: 8px;
             border-bottom: 1px solid var(--primary-dark);
             font-family: 'Consolas', 'Monaco', monospace;
         }
@@ -736,51 +422,36 @@
             justify-content: flex-end;
         }
         
-        .modal-buttons button {
-            flex: none;
+        input[type="file"] {
+            display: none;
         }
         
-        
         @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .left-panel {
-                border-right: none;
-                border-bottom: 1px solid var(--surface-dark);
-            }
-            
-            .panel-header-controls {
+            .controls-panel {
                 flex-direction: column;
+                align-items: stretch;
             }
             
-            .tree-controls {
-                flex-direction: column;
+            .search-container {
+                max-width: 100%;
             }
             
             .button-group {
-                flex-direction: column;
-            }
-            
-            .button-group button {
                 width: 100%;
+                justify-content: space-between;
             }
             
-            .stats-grid {
-                grid-template-columns: 1fr;
+            button {
+                flex: 1;
             }
-        }
-        
-        
-        .fullscreen-btn {
-            display: none; 
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
-        }
-        
-        @media (max-width: 768px) {
-            .fullscreen-btn {
-                display: flex;
+            
+            .stats-container {
+                justify-content: space-between;
+            }
+            
+            .stat-card {
+                flex: 1;
+                min-width: auto;
             }
         }
     </style>
@@ -792,130 +463,54 @@
         </header>
         
         <div class="main-content">
-            <div class="left-panel">
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-database"></i>
-                            </div>
-                            <h2>数据管理</h2>
-                        </div>
+            <div class="controls-panel">
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalElements">0</div>
+                        <div class="stat-label">词汇总数</div>
                     </div>
-                    <div class="button-group">
-                        <button id="importBtn">
-                            <i class="fas fa-upload"></i> 导入数据
-                        </button>
-                        <button id="viewRecipesBtn" class="secondary">
-                            <i class="fas fa-list"></i> 查看合成表
-                        </button>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalRecipes">0</div>
+                        <div class="stat-label">规则总数</div>
                     </div>
-                    <input type="file" id="importFile" accept=".json,.lzjson" style="display: none;">
-                </div>
-
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-chart-bar"></i>
-                            </div>
-                            <h2>统计</h2>
-                        </div>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="totalElements">0</div>
-                            <div class="stat-label">词汇总数</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="totalRecipes">0</div>
-                            <div class="stat-label">规则总数</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="pendingCombinations">0</div>
-                            <div class="stat-label">待探索组合</div>
-                        </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="pendingCombinations">0</div>
+                        <div class="stat-label">待探索组合</div>
                     </div>
                 </div>
                 
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-terminal"></i>
-                            </div>
-                            <h2>日志输出</h2>
-                        </div>
-                    </div>
-                    <div class="log-output" id="logOutput">
-                        <!-- 日志 -->
-                    </div>
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="搜索元素...">
                 </div>
+                
+                <div class="button-group">
+                    <button id="importBtn">
+                        <i class="fas fa-upload"></i> 导入数据
+                    </button>
+                    <button id="viewRecipesBtn" class="accent">
+                        <i class="fas fa-list"></i> 查看合成表
+                    </button>
+                </div>
+                <input type="file" id="importFile" accept=".txt" style="display: none;">
             </div>
             
-            <div class="right-panel">
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-sitemap"></i>
-                            </div>
-                            <h2>合成树</h2>
-                        </div>
-                        <div class="panel-header-controls">
-                            <button id="collapseAllBtn" class="collapse-expand-btn">
-                                <i class="fas fa-compress-alt"></i> 全部折叠
-                            </button>
-                            <button id="expandAllBtn" class="collapse-expand-btn">
-                                <i class="fas fa-expand-alt"></i> 全部展开
-                            </button>
-                            <button id="fullscreenBtn" class="fullscreen-btn">
-                                <i class="fas fa-expand"></i> 全屏查看
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="tree-controls">
-                        <div class="toggle-group">
-                            <label class="toggle-label">
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="shortestPathOnly" checked>
-                                    <span class="toggle-slider"></span>
-                                </div>
-                                最短路径模式
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="search-container">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchInput" placeholder="搜索元素...">
-                    </div>
-                    
-                    <div class="tier-stats" id="tierStats">
-                        <!-- 层级统计 -->
-                    </div>
-                    
-                    <div class="tree-container" id="treeContainer">
-                        <div class="tree" id="synthesisTree">
-                           <!-- Tree will be rendered here -->
-                        </div>
-                    </div>
-                </div>
+            <div class="tree-container" id="treeContainer">
+                <button class="fullscreen-btn" id="fullscreenBtn">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <div class="tree" id="synthesisTree"></div>
             </div>
         </div>
     </div>
 
-    <!-- 合成表模态框 -->
     <div id="recipeModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>合成表</h2>
                 <button class="close-btn" id="closeModalBtn">&times;</button>
             </div>
-            <div class="recipe-list" id="recipeList">
-                <!-- 合成表将在这里显示 -->
-            </div>
+            <div class="recipe-list" id="recipeList"></div>
             <div class="modal-buttons">
                 <button id="exportRecipesBtn" class="accent">
                     <i class="fas fa-download"></i> 导出合成表
@@ -928,70 +523,46 @@
     </div>
 
     <script>
-        // Initial setup and constants
         const INITIAL_ELEMENTS = ['金', '木', '水', '火', '土'];
-        const corsProxy = 'https://api.allorigins.win/raw?url=';
+        const STORAGE_KEY = 'synthesis-data';
         
-        // Core data structures
         let ElementID = {}; 
         let CanonicalPath = {}; 
         let AllRules = []; 
         let FSet = new Set();
         let currentId = 1;
         
-        // State variables
-        let isAutoTraversing = false;
-        let traverseInterval = null;
-        
-        // DOM element references
         const D = (id) => document.getElementById(id);
-        const importBtn = D('importBtn'), importFile = D('importFile'), logOutput = D('logOutput'),
-              totalElementsSpan = D('totalElements'), totalRecipesSpan = D('totalRecipes'),
-              pendingCombinationsSpan = D('pendingCombinations'),
-              shortestPathOnly = D('shortestPathOnly'), searchInput = D('searchInput'),
-              collapseAllBtn = D('collapseAllBtn'), expandAllBtn = D('expandAllBtn'),
-              tierStats = D('tierStats'), synthesisTree = D('synthesisTree'), treeContainer = D('treeContainer'),
+        const totalElementsSpan = D('totalElements'), totalRecipesSpan = D('totalRecipes'),
+              pendingCombinationsSpan = D('pendingCombinations'), searchInput = D('searchInput'),
+              synthesisTree = D('synthesisTree'), treeContainer = D('treeContainer'),
+              importBtn = D('importBtn'), importFile = D('importFile'),
               viewRecipesBtn = D('viewRecipesBtn'), recipeModal = D('recipeModal'),
               recipeList = D('recipeList'), closeModalBtn = D('closeModalBtn'),
               closeModalBtn2 = D('closeModalBtn2'), exportRecipesBtn = D('exportRecipesBtn'),
               fullscreenBtn = D('fullscreenBtn');
 
         function init() {
-            loadDataFromStorage(); // 从本地存储加载数据
+            loadFromLocalStorage();
             updateUI();
             addEventListeners();
-            log('系统初始化完成', 'success');
         }
         
         function addEventListeners() {
             importBtn.addEventListener('click', () => importFile.click());
             importFile.addEventListener('change', importData);
-            shortestPathOnly.addEventListener('change', updateAndRenderTree);
-            collapseAllBtn.addEventListener('click', () => toggleAllNodes(false));
-            expandAllBtn.addEventListener('click', () => toggleAllNodes(true));
-            searchInput.addEventListener('input', applySearchFilter);
             viewRecipesBtn.addEventListener('click', showRecipeModal);
             closeModalBtn.addEventListener('click', hideRecipeModal);
             closeModalBtn2.addEventListener('click', hideRecipeModal);
             exportRecipesBtn.addEventListener('click', exportRecipes);
+            searchInput.addEventListener('input', applySearchFilter);
             fullscreenBtn.addEventListener('click', toggleFullscreen);
             
-            // 点击模态框外部关闭
             window.addEventListener('click', (e) => {
-                if (e.target === recipeModal) {
-                    hideRecipeModal();
-                }
-            });
-            
-            // 按ESC键退出全屏
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && treeContainer.classList.contains('fullscreen')) {
-                    toggleFullscreen();
-                }
+                if (e.target === recipeModal) hideRecipeModal();
             });
         }
 
-        // --- Data Management ---
         function initializeData() {
             ElementID = {};
             CanonicalPath = {};
@@ -1008,7 +579,6 @@
             const id = currentId++;
             ElementID[name] = id;
             CanonicalPath[id] = [id];
-            log(`发现新元素: ${name} (ID: ${id})`, 'info');
             return id;
         }
 
@@ -1032,41 +602,6 @@
                     }
                 }
             }
-        }
-
-        function addSynthesisRule(a, b, result) {
-            const aId = getOrCreateElementId(a);
-            const bId = getOrCreateElementId(b);
-            const resultId = getOrCreateElementId(result);
-            const combinationKey = JSON.stringify([aId, bId].sort((a, b) => a - b));
-            
-            FSet.delete(combinationKey);
-
-            const ruleExists = AllRules.some(rule => 
-                JSON.stringify(rule[0].sort((a, b) => a - b)) === combinationKey && rule[1] === resultId
-            );
-
-            if (ruleExists) {
-                log(`规则已存在: ${a} + ${b} = ${result}`, 'info');
-                return false;
-            }
-
-            AllRules.push([[aId, bId], resultId]);
-            log(`添加新规则: ${a} + ${b} = ${result}`, 'success');
-            
-            recalculateCanonicalPaths();
-
-            const allIds = Object.values(ElementID);
-            for (const otherId of allIds) {
-                const newCombination = JSON.stringify([resultId, otherId].sort((a, b) => a - b));
-                if (!AllRules.some(r => JSON.stringify(r[0].sort()) === newCombination)) {
-                    FSet.add(newCombination);
-                }
-            }
-            
-            // 保存到本地存储
-            saveDataToStorage();
-            return true;
         }
 
         function recalculateCanonicalPaths() {
@@ -1097,7 +632,6 @@
             return newPath.join(',') < currentPath.join(',');
         }
 
-        // --- UI & Rendering ---
         function updateAndRenderTree() {
             const treeData = buildTreeData();
             renderTree(treeData);
@@ -1120,7 +654,6 @@
                 };
             });
 
-            // 收集所有规则
             AllRules.forEach(([sources, targetId]) => {
                 const targetName = getElementName(targetId);
                 const source1Name = getElementName(sources[0]);
@@ -1130,65 +663,42 @@
                 }
             });
 
-            // 如果启用了最短路径模式，则过滤配方
-            if (shortestPathOnly.checked) {
-                Object.values(tree).forEach(node => {
-                    if (node.recipes.length > 1) {
-                        // 找到最短路径的配方
-                        const minDepth = Math.min(...node.recipes.map(r => 
-                            Math.max(tree[r.a].depth, tree[r.b].depth)
-                        ));
-                        node.recipes = node.recipes.filter(r => 
-                            Math.max(tree[r.a].depth, tree[r.b].depth) === minDepth
-                        );
-                    }
-                });
-            }
-
             return tree;
         }
 
         function renderTree(treeData) {
             const sortedNames = Object.keys(treeData).sort((a, b) => {
-                // 初始元素排在最前面
                 const aIsInitial = INITIAL_ELEMENTS.includes(a);
                 const bIsInitial = INITIAL_ELEMENTS.includes(b);
                 
                 if (aIsInitial && !bIsInitial) return -1;
                 if (!aIsInitial && bIsInitial) return 1;
                 
-                // 相同类型（都是初始元素或都不是）按CPath排序
                 const aCPath = CanonicalPath[ElementID[a]];
                 const bCPath = CanonicalPath[ElementID[b]];
                 
-                // 按CPath长度排序
                 if (aCPath.length !== bCPath.length) {
                     return aCPath.length - bCPath.length;
                 }
                 
-                // 相同长度按CPath内容排序
                 for (let i = 0; i < aCPath.length; i++) {
                     if (aCPath[i] !== bCPath[i]) {
                         return aCPath[i] - bCPath[i];
                     }
                 }
                 
-                // 完全相同则按名称排序
                 return a.localeCompare(b, 'zh-Hans-CN');
             });
 
             if (sortedNames.length === 0) {
-                synthesisTree.innerHTML = `<div class="empty-state"><i class="fas fa-tree"></i><h3>暂无合成数据</h3></div>`;
+                synthesisTree.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-secondary)"><i class="fas fa-tree" style="font-size:3rem;margin-bottom:15px;color:var(--primary-dark)"></i><h3 style="font-size:1.3rem;color:var(--text-primary)">暂无合成数据</h3></div>`;
                 return;
             }
 
             const fragment = document.createDocumentFragment();
-            
-            // 创建根节点容器
             const rootContainer = document.createElement('div');
             rootContainer.className = 'tree-root';
             
-            // 渲染所有元素作为根节点
             sortedNames.forEach(name => {
                 const nodeElement = createNodeElement(treeData[name], treeData, new Set());
                 if (nodeElement) {
@@ -1200,7 +710,6 @@
             synthesisTree.innerHTML = '';
             synthesisTree.appendChild(fragment);
 
-            // 绑定展开/折叠事件
             synthesisTree.querySelectorAll('.node-expand').forEach(el => {
                 el.addEventListener('click', e => {
                     e.stopPropagation();
@@ -1218,7 +727,6 @@
             const nodeEl = document.createElement('div');
             nodeEl.className = `tree-node expanded ${node.isInitial ? 'initial-element' : ''}`;
             nodeEl.dataset.name = node.name;
-            nodeEl.dataset.id = node.id;
 
             const hasRecipes = node.recipes.length > 0;
 
@@ -1233,7 +741,6 @@
                 const childrenEl = document.createElement('div');
                 childrenEl.className = 'children';
                 
-                // 为每个配方创建一个路径
                 node.recipes.forEach(recipe => {
                     const recipePath = document.createElement('div');
                     recipePath.className = 'recipe-path';
@@ -1241,33 +748,28 @@
                     const recipeContent = document.createElement('div');
                     recipeContent.className = 'recipe-path-content';
                     
-                    // 添加第一个成分
                     const ingredientA = document.createElement('span');
                     ingredientA.className = 'recipe-ingredient';
                     ingredientA.textContent = recipe.a;
                     ingredientA.dataset.name = recipe.a;
                     recipeContent.appendChild(ingredientA);
                     
-                    // 添加连接符
                     const connector = document.createElement('span');
                     connector.className = 'recipe-connector';
                     connector.innerHTML = '<i class="fas fa-plus"></i>';
                     recipeContent.appendChild(connector);
                     
-                    // 添加第二个成分
                     const ingredientB = document.createElement('span');
                     ingredientB.className = 'recipe-ingredient';
                     ingredientB.textContent = recipe.b;
                     ingredientB.dataset.name = recipe.b;
                     recipeContent.appendChild(ingredientB);
                     
-                    // 添加等号
                     const equals = document.createElement('span');
                     equals.className = 'recipe-connector';
                     equals.innerHTML = '<i class="fas fa-equals"></i>';
                     recipeContent.appendChild(equals);
                     
-                    // 添加结果（当前节点）
                     const result = document.createElement('span');
                     result.className = 'recipe-ingredient';
                     result.textContent = node.name;
@@ -1276,7 +778,6 @@
                     recipePath.appendChild(recipeContent);
                     childrenEl.appendChild(recipePath);
                     
-                    // 为每个成分创建子节点
                     const childA = treeData[recipe.a];
                     if (childA) {
                         const childNode = createNodeElement(childA, treeData, new Set(rendered));
@@ -1296,19 +797,16 @@
             return nodeEl;
         }
 
-        // 新的搜索过滤逻辑
         function applySearchFilter() {
             const term = searchInput.value.trim().toLowerCase();
             const allNodes = synthesisTree.querySelectorAll('.tree-node');
             const allItemNodes = synthesisTree.querySelectorAll('.node-content, .recipe-ingredient');
 
-            // 重置所有状态
             synthesisTree.classList.toggle('search-active', !!term);
             allNodes.forEach(n => n.classList.remove('is-hidden', 'is-match', 'is-ancestor'));
             allItemNodes.forEach(n => n.classList.remove('highlight'));
 
             if (!term) {
-                // 如果搜索被清空，恢复默认视图
                 allNodes.forEach(n => {
                     const nodeName = n.dataset.name;
                     const hasRecipes = n.querySelector('.children') && n.querySelector('.children').children.length > 0;
@@ -1320,7 +818,6 @@
 
             const matchedNodes = new Set();
             
-            // 查找匹配的节点
             allNodes.forEach(node => {
                 const nodeName = node.dataset.name;
                 
@@ -1331,7 +828,6 @@
                 }
             });
 
-            // 标记匹配节点的祖先节点，使其保持可见
             matchedNodes.forEach(node => {
                 let parent = node.parentElement.closest('.tree-node');
                 while (parent) {
@@ -1340,7 +836,6 @@
                 }
             });
             
-            // 隐藏不匹配的节点
             allNodes.forEach(node => {
                 const isMatch = node.classList.contains('is-match');
                 const isAncestor = node.classList.contains('is-ancestor');
@@ -1349,27 +844,10 @@
                 if (!isMatch && !isAncestor && !isDescendant) {
                     node.classList.add('is-hidden');
                 } else {
-                    // 展开所有相关节点
                     node.classList.add('expanded');
                     node.classList.remove('collapsed');
                 }
             });
-        }
-        
-        function toggleAllNodes(expand) {
-            synthesisTree.querySelectorAll('.tree-node').forEach(node => {
-                node.classList.toggle('expanded', expand);
-                node.classList.toggle('collapsed', !expand);
-            });
-        }
-        
-        function toggleFullscreen() {
-            treeContainer.classList.toggle('fullscreen');
-            if (treeContainer.classList.contains('fullscreen')) {
-                fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> 退出全屏';
-            } else {
-                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i> 全屏查看';
-            }
         }
         
         function updateUI() {
@@ -1377,33 +855,9 @@
             totalElementsSpan.textContent = elementCount;
             totalRecipesSpan.textContent = AllRules.length;
             pendingCombinationsSpan.textContent = FSet.size;
-            
-            const totalCombinations = (elementCount * (elementCount + 1)) / 2;
-            const explored = totalCombinations > 0 ? totalCombinations - FSet.size : 0;
-            
-            updateTierStats();
-        }
-
-        function updateTierStats() {
-            const counts = {};
-            let maxTier = 0;
-            Object.values(ElementID).forEach(id => {
-                const tier = getElementDepth(id);
-                // 跳过T0（初始元素）
-                if (tier > 0) {
-                    counts[tier] = (counts[tier] || 0) + 1;
-                    maxTier = Math.max(maxTier, tier);
-                }
-            });
-            
-            tierStats.innerHTML = Array.from({length: maxTier + 1}, (_, i) => 
-                i > 0 && counts[i] ? `<div class="tier-stat">T${i}: <span class="tier-stat-value">${counts[i]}</span></div>` : ''
-            ).join('');
         }
         
-        // --- 合成表功能 ---
         function showRecipeModal() {
-            // 生成合成表内容
             let recipeText = '';
             AllRules.forEach(rule => {
                 const [sources, targetId] = rule;
@@ -1437,81 +891,77 @@
             a.download = `synthesis-recipes-${new Date().toISOString().slice(0,10)}.txt`;
             a.click();
             URL.revokeObjectURL(a.href);
-            log('合成表导出成功', 'success');
         }
         
-        // --- 数据持久化 ---
-        function saveDataToStorage() {
-            const data = {
-                ElementID,
-                AllRules,
-                CanonicalPath,
-                currentId
-            };
-            localStorage.setItem('synthesisData', JSON.stringify(data));
-        }
-        
-        function loadDataFromStorage() {
-            const savedData = localStorage.getItem('synthesisData');
-            if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    ElementID = data.ElementID || {};
-                    AllRules = data.AllRules || [];
-                    CanonicalPath = data.CanonicalPath || {};
-                    currentId = data.currentId || 1;
-                    
-                    initializeFSet();
-                    updateAndRenderTree();
-                    log('从本地存储加载数据成功', 'success');
-                } catch (error) {
-                    log('从本地存储加载数据失败，使用默认数据', 'error');
-                    initializeData();
-                }
+        function toggleFullscreen() {
+            if (treeContainer.classList.contains('fullscreen')) {
+                treeContainer.classList.remove('fullscreen');
+                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
             } else {
-                log('没有找到保存的数据，使用默认数据', 'info');
-                initializeData();
+                treeContainer.classList.add('fullscreen');
+                fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
             }
         }
         
-        // --- Data I/O & Utils ---
+        function saveToLocalStorage() {
+            const dataStr = JSON.stringify({ ElementID, AllRules, CanonicalPath, currentId });
+            const compressed = LZString.compressToBase64(dataStr);
+            localStorage.setItem(STORAGE_KEY, compressed);
+        }
+        
+        function loadFromLocalStorage() {
+            const compressed = localStorage.getItem(STORAGE_KEY);
+            if (compressed) {
+                try {
+                    const decompressed = LZString.decompressFromBase64(compressed);
+                    const imported = JSON.parse(decompressed);
+                    if (imported.ElementID && imported.AllRules) {
+                        ElementID = imported.ElementID;
+                        AllRules = imported.AllRules;
+                        CanonicalPath = imported.CanonicalPath || {};
+                        currentId = imported.currentId || Math.max(...Object.values(ElementID)) + 1;
+                        
+                        initializeFSet();
+                        updateAndRenderTree();
+                        return;
+                    }
+                } catch (error) {
+                    console.error('加载本地数据失败:', error);
+                }
+            }
+            initializeData();
+        }
+        
         function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
+            
             const reader = new FileReader();
             reader.onload = e => {
-                try {
-                    const decompressed = LZString.decompressFromBase64(e.target.result);
-                    const imported = JSON.parse(decompressed);
-                    if (!imported.ElementID || !imported.AllRules) throw new Error('导入数据格式不正确');
-                    
-                    ElementID = imported.ElementID;
-                    AllRules = imported.AllRules;
-                    CanonicalPath = imported.CanonicalPath || {};
-                    currentId = imported.currentId || Math.max(...Object.values(ElementID)) + 1;
-                    
-                    initializeFSet();
-                    updateAndRenderTree();
-                    saveDataToStorage(); // 保存到本地存储
-                    log(`数据导入成功: ${Object.keys(ElementID).length}个元素, ${AllRules.length}条规则`, 'success');
-                } catch (error) {
-                    log(`导入失败: ${error.message}`, 'error');
-                } finally {
-                    event.target.value = '';
-                }
+                setTimeout(() => {
+                    try {
+                        const decompressed = LZString.decompressFromBase64(e.target.result);
+                        const imported = JSON.parse(decompressed);
+                        if (!imported.ElementID || !imported.AllRules) throw new Error('导入数据格式不正确');
+                        
+                        ElementID = imported.ElementID;
+                        AllRules = imported.AllRules;
+                        CanonicalPath = imported.CanonicalPath || {};
+                        currentId = imported.currentId || Math.max(...Object.values(ElementID)) + 1;
+                        
+                        initializeFSet();
+                        updateAndRenderTree();
+                        saveToLocalStorage();
+                    } catch (error) {
+                        alert('导入失败: ' + error.message);
+                    } finally {
+                        event.target.value = '';
+                    }
+                }, 100);
             };
             reader.readAsText(file);
         }
 
-        function log(message, type = 'info') {
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${type}`;
-            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            logOutput.appendChild(entry);
-            logOutput.scrollTop = logOutput.scrollHeight;
-        }
-
-        // Initialize the application
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
