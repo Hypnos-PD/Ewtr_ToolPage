@@ -426,6 +426,11 @@
             display: none;
         }
         
+        .tree-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
         @media (max-width: 768px) {
             .controls-panel {
                 flex-direction: column;
@@ -452,6 +457,11 @@
             .stat-card {
                 flex: 1;
                 min-width: auto;
+            }
+            
+            .tree-controls {
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>
@@ -492,6 +502,16 @@
                         <i class="fas fa-list"></i> 查看合成表
                     </button>
                 </div>
+                
+                <div class="tree-controls">
+                    <button id="collapseAllBtn">
+                        <i class="fas fa-compress-alt"></i> 全部折叠
+                    </button>
+                    <button id="expandAllBtn">
+                        <i class="fas fa-expand-alt"></i> 全部展开
+                    </button>
+                </div>
+                
                 <input type="file" id="importFile" accept=".txt" style="display: none;">
             </div>
             
@@ -523,6 +543,12 @@
     </div>
 
     <script>
+        // 检查LZString是否加载，如果未加载则提示用户
+        if (typeof LZString === 'undefined') {
+            console.error('LZString未正确加载，请检查网络连接');
+            alert('LZString库加载失败，导入导出功能将不可用。请刷新页面重试。');
+        }
+
         const INITIAL_ELEMENTS = ['金', '木', '水', '火', '土'];
         const STORAGE_KEY = 'synthesis-data';
         
@@ -540,12 +566,31 @@
               viewRecipesBtn = D('viewRecipesBtn'), recipeModal = D('recipeModal'),
               recipeList = D('recipeList'), closeModalBtn = D('closeModalBtn'),
               closeModalBtn2 = D('closeModalBtn2'), exportRecipesBtn = D('exportRecipesBtn'),
-              fullscreenBtn = D('fullscreenBtn');
+              fullscreenBtn = D('fullscreenBtn'), collapseAllBtn = D('collapseAllBtn'),
+              expandAllBtn = D('expandAllBtn');
+
+        // 防抖函数，减少搜索时的频繁触发
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
 
         function init() {
             loadFromLocalStorage();
             updateUI();
             addEventListeners();
+            
+            // 默认全部折叠
+            setTimeout(() => {
+                toggleAllNodes(false);
+            }, 100);
         }
         
         function addEventListeners() {
@@ -555,8 +600,13 @@
             closeModalBtn.addEventListener('click', hideRecipeModal);
             closeModalBtn2.addEventListener('click', hideRecipeModal);
             exportRecipesBtn.addEventListener('click', exportRecipes);
-            searchInput.addEventListener('input', applySearchFilter);
+            
+            // 使用防抖处理搜索输入
+            searchInput.addEventListener('input', debounce(applySearchFilter, 300));
+            
             fullscreenBtn.addEventListener('click', toggleFullscreen);
+            collapseAllBtn.addEventListener('click', () => toggleAllNodes(false));
+            expandAllBtn.addEventListener('click', () => toggleAllNodes(true));
             
             window.addEventListener('click', (e) => {
                 if (e.target === recipeModal) hideRecipeModal();
@@ -725,7 +775,7 @@
             rendered.add(node.name);
 
             const nodeEl = document.createElement('div');
-            nodeEl.className = `tree-node expanded ${node.isInitial ? 'initial-element' : ''}`;
+            nodeEl.className = `tree-node collapsed ${node.isInitial ? 'initial-element' : ''}`;
             nodeEl.dataset.name = node.name;
 
             const hasRecipes = node.recipes.length > 0;
@@ -810,8 +860,9 @@
                 allNodes.forEach(n => {
                     const nodeName = n.dataset.name;
                     const hasRecipes = n.querySelector('.children') && n.querySelector('.children').children.length > 0;
-                    n.classList.toggle('expanded', !hasRecipes || getElementDepth(ElementID[nodeName]) < 2);
-                    n.classList.toggle('collapsed', hasRecipes && getElementDepth(ElementID[nodeName]) >= 2);
+                    // 默认保持折叠状态
+                    n.classList.add('collapsed');
+                    n.classList.remove('expanded');
                 });
                 return;
             }
@@ -847,6 +898,13 @@
                     node.classList.add('expanded');
                     node.classList.remove('collapsed');
                 }
+            });
+        }
+        
+        function toggleAllNodes(expand) {
+            synthesisTree.querySelectorAll('.tree-node').forEach(node => {
+                node.classList.toggle('expanded', expand);
+                node.classList.toggle('collapsed', !expand);
             });
         }
         
@@ -936,6 +994,11 @@
             const file = event.target.files[0];
             if (!file) return;
             
+            // 显示加载提示
+            const originalText = importBtn.innerHTML;
+            importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 导入中...';
+            importBtn.disabled = true;
+            
             const reader = new FileReader();
             reader.onload = e => {
                 setTimeout(() => {
@@ -952,8 +1015,19 @@
                         initializeFSet();
                         updateAndRenderTree();
                         saveToLocalStorage();
+                        
+                        // 恢复按钮状态
+                        importBtn.innerHTML = originalText;
+                        importBtn.disabled = false;
+                        
+                        // 默认全部折叠
+                        setTimeout(() => {
+                            toggleAllNodes(false);
+                        }, 100);
                     } catch (error) {
                         alert('导入失败: ' + error.message);
+                        importBtn.innerHTML = originalText;
+                        importBtn.disabled = false;
                     } finally {
                         event.target.value = '';
                     }
