@@ -2,1041 +2,1058 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>合成检索工具</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/pieroxy/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    <title>合成数据可视化</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
-        :root {
-            --primary: #2d5a27;
-            --primary-light: #4caf50;
-            --primary-dark: #1b3a1b;
-            --secondary: #37474f;
-            --accent: #ff9800;
-            --surface: #121212;
-            --surface-light: #1e1e1e;
-            --surface-dark: #0a0a0a;
-            --text-primary: #e0e0e0;
-            --text-secondary: #b0b0b0;
-            --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-            --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-            --radius: 8px;
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
+        body { font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background-color: #eef1f6; }
         
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        .container { 
+            max-width: 1400px; 
+            margin: auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); 
+            transition: all 0.3s;
         }
+
+        h1 { color: #3f51b5; border-bottom: 3px solid #3f51b5; padding-bottom: 10px; margin-bottom: 20px; font-weight: 300; }
+        h2 { color: #333; margin-top: 25px; border-left: 5px solid #ff9800; padding-left: 15px; font-weight: 400; }
         
-        body {
-            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: linear-gradient(135deg, #0a0a0a 0%, #1b3a1b 100%);
-            min-height: 100vh;
-            padding: 15px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: var(--surface-light);
-            border-radius: 12px;
-            box-shadow: var(--shadow-2);
-            overflow: hidden;
-            border: 1px solid var(--primary-dark);
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 30px);
-        }
-        
-        header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
+        .chart-container { 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            margin-top: 15px;
+            background: #fafafa;
+            overflow: hidden; 
             position: relative;
         }
         
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+        .controls { margin-bottom: 15px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 10px 0; }
+        .controls input[type="file"], .controls button, .controls input[type="text"], .controls input[type="number"] { 
+            padding: 9px 14px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            width: 80px;
         }
-        
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            overflow: hidden;
+        .controls button { 
+            background-color: #4caf50; 
+            color: white; 
+            cursor: pointer; 
+            border: none;
+            width: auto !important; 
         }
+        .controls button:hover { background-color: #388e3c; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
         
-        .controls-panel {
-            background-color: var(--surface);
-            padding: 15px;
-            border-bottom: 1px solid var(--surface-dark);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-        }
-        
-        .stats-container {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 10px 15px;
-            border-radius: var(--radius);
-            text-align: center;
-            box-shadow: var(--shadow-1);
-            min-width: 100px;
-        }
-        
-        .stat-value {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 3px;
-        }
-        
-        .stat-label {
-            font-size: 0.75rem;
-            opacity: 0.9;
-        }
-        
-        .search-container {
-            position: relative;
-            flex-grow: 1;
-            max-width: 300px;
-        }
-        
-        .search-container i {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-        }
-        
-        .search-container input {
-            padding-left: 40px;
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: var(--transition);
-            background-color: var(--surface-light);
-            color: var(--text-primary);
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 10px;
-        }
-        
-        button {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tabs button {
+            padding: 10px 18px;
             border: none;
             cursor: pointer;
-            padding: 10px 15px;
-            border-radius: var(--radius);
-            font-size: 0.9rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: var(--shadow-1);
-            transition: var(--transition);
+            margin-right: 5px;
+            background-color: #e0e0e0;
+            border-bottom: 3px solid transparent;
+            border-radius: 8px 8px 0 0;
+            font-weight: 500;
         }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-2);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        button.accent {
-            background: linear-gradient(135deg, var(--accent) 0%, #e65100 100%);
-        }
-        
-        .tree-container {
-            flex-grow: 1;
-            overflow: auto;
-            background-color: var(--surface-dark);
-            position: relative;
-        }
-        
-        .tree {
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.9rem;
-            min-width: 100%;
-            padding: 15px;
-        }
-        
-        .tree-node {
-            position: relative;
-            margin: 5px 0;
-        }
-        
-        .node-content {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            padding: 6px 10px;
-            border-radius: var(--radius);
-            background-color: var(--surface);
-            border: 1px solid var(--primary-dark);
-            transition: var(--transition);
-            width: fit-content;
-        }
-        
-        .node-content:hover {
-            background-color: var(--surface-light);
-        }
-        
-        .node-content.highlight {
-            background-color: var(--accent);
-            color: white;
+        .tabs button.active {
+            background-color: white;
+            border-bottom: 3px solid #3f51b5;
             font-weight: bold;
+            color: #3f51b5;
         }
         
-        .node-expand {
-            width: 20px;
-            height: 20px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 6px;
-            font-size: 0.7rem;
-            color: var(--primary-light);
-            background-color: var(--surface);
-            border-radius: 50%;
-            border: 1px solid var(--primary);
+        #status_message { color: #e53935; font-weight: bold; margin-left: 15px; }
+
+        #log_area {
+            min-height: 20px; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+            background: #fdfdff; 
+            font-size: 13px; 
+            color: #555; 
+            overflow-y: auto; 
+            max-height: 100px;
         }
-        
-        .node-expand::before {
-            content: "▶";
-            transition: transform 0.2s;
+        #log_area p {
+             margin: 0;
+             padding: 2px 0;
+             border-bottom: 1px dashed #eee;
         }
-        
-        .tree-node.expanded > .node-content > .node-expand::before {
-            transform: rotate(90deg);
+        #log_area p:last-child {
+             border-bottom: none;
         }
-        
-        .tree-node.collapsed > .children {
-            display: none;
+
+
+        #rectangular_tree_container_wrapper {
+            height: 600px;
+            overflow: hidden; 
+            cursor: grab;
+            user-select: none;
         }
-        
-        .children {
-            padding-left: 25px;
-            position: relative;
-            margin-top: 5px;
+
+        #rectangular_tree_container_wrapper.is-dragging {
+            cursor: grabbing;
         }
-        
-        .children::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 12px;
-            width: 1px;
-            background-color: var(--primary-dark);
-        }
-        
-        .recipe-path {
-            display: flex;
-            align-items: center;
-            margin: 5px 0;
-            position: relative;
-            padding-left: 8px;
-        }
-        
-        .recipe-path::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 8px;
-            height: 1px;
-            background-color: var(--primary-dark);
-        }
-        
-        .recipe-path-content {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 8px;
-            background-color: var(--surface);
-            border-radius: var(--radius);
-            border: 1px solid var(--primary-dark);
-        }
-        
-        .recipe-connector {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            margin: 0 3px;
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-        }
-        
-        .recipe-ingredient {
-            padding: 2px 6px;
-            background-color: var(--surface-light);
-            border-radius: 4px;
-            border: 1px solid var(--primary-dark);
-            cursor: pointer;
-        }
-        
-        .recipe-ingredient.highlight {
-            background-color: var(--accent);
-            color: white;
-            font-weight: bold;
-        }
-        
-        .initial-item {
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-        }
-        
-        .tree.search-active .tree-node.is-hidden {
-            display: none;
-        }
-        
-        .fullscreen-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 10;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        .fullscreen-btn:hover {
-            background: rgba(0, 0, 0, 0.9);
-            transform: scale(1.1);
-        }
-        
-        .tree-container.fullscreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1000;
-            background: var(--surface-dark);
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
+
+        #rectangular_tree_container {
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+            display: flex; 
+            align-items: flex-start; 
+            flex-wrap: nowrap;
+            transform-origin: 0 0; 
+            transition: transform 0.1s ease-out; 
+            min-width: 100%; 
         }
         
-        .modal-content {
-            background-color: var(--surface);
-            border-radius: var(--radius);
-            padding: 20px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: var(--shadow-2);
-            border: 1px solid var(--primary-dark);
-        }
-        
-        .modal-header {
+        .icicle-root {
+            height: 100%;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--primary-dark);
+            flex-direction: column;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
         }
-        
-        .modal-header h2 {
-            color: var(--text-primary);
-            font-size: 1.3rem;
+
+        .icicle-node-container {
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 2px;
+            margin-top: -1px; 
         }
-        
-        .close-btn {
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            font-size: 1.5rem;
+
+        .icicle-node-label {
+            height: 35px;
+            line-height: 35px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: #fff;
+            box-sizing: border-box;
+            overflow: hidden;
+            white-space: nowrap;
             cursor: pointer;
-            padding: 5px;
+            width: 100%; 
+            margin: 0; 
+            padding: 0 5px;
+            border-radius: 2px; 
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 0 5px rgba(255, 255, 255, 0.4);
+            transition: background-color 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.5); 
         }
-        
-        .recipe-list {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-bottom: 15px;
-        }
-        
-        .recipe-item {
-            padding: 8px;
-            border-bottom: 1px solid var(--primary-dark);
-            font-family: 'Consolas', 'Monaco', monospace;
-        }
-        
-        .recipe-item:last-child {
-            border-bottom: none;
-        }
-        
-        .modal-buttons {
+
+        .icicle-children-container {
             display: flex;
-            gap: 10px;
-            justify-content: flex-end;
+            flex-direction: row;
+            width: 100%; 
+            flex-grow: 1; 
         }
         
-        input[type="file"] {
+        #dag_graph_container {
+            height: 600px; 
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #555;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap; 
+        }
+
+        .toggle-switch input {
             display: none;
         }
-        
-        .tree-controls {
-            display: flex;
-            gap: 10px;
+
+        .slider {
+            width: 45px;
+            height: 24px;
+            background-color: #ccc;
+            border-radius: 12px;
+            position: relative;
+            margin-left: 10px;
+            margin-right: 8px;
+            transition: background-color 0.4s;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
         }
-        
-        @media (max-width: 768px) {
-            .controls-panel {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .search-container {
-                max-width: 100%;
-            }
-            
-            .button-group {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            button {
-                flex: 1;
-            }
-            
-            .stats-container {
-                justify-content: space-between;
-            }
-            
-            .stat-card {
-                flex: 1;
-                min-width: auto;
-            }
-            
-            .tree-controls {
-                width: 100%;
-                justify-content: center;
-            }
+
+        .slider:before {
+            content: "";
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: white;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.4s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
+
+        input:checked + .slider {
+            background-color: #3f51b5;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(21px);
+        }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1><i class="fas fa-atom"></i> 合成检索工具</h1>
-        </header>
-        
-        <div class="main-content">
-            <div class="controls-panel">
-                <div class="stats-container">
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalElements">0</div>
-                        <div class="stat-label">词汇总数</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalRecipes">0</div>
-                        <div class="stat-label">规则总数</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="pendingCombinations">0</div>
-                        <div class="stat-label">待探索组合</div>
-                    </div>
-                </div>
-                
-                <div class="search-container">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="搜索元素...">
-                </div>
-                
-                <div class="button-group">
-                    <button id="importBtn">
-                        <i class="fas fa-upload"></i> 导入数据
-                    </button>
-                    <button id="viewRecipesBtn" class="accent">
-                        <i class="fas fa-list"></i> 查看合成表
-                    </button>
-                </div>
-                
-                <div class="tree-controls">
-                    <button id="collapseAllBtn">
-                        <i class="fas fa-compress-alt"></i> 全部折叠
-                    </button>
-                    <button id="expandAllBtn">
-                        <i class="fas fa-expand-alt"></i> 全部展开
-                    </button>
-                </div>
-                
-                <input type="file" id="importFile" accept=".txt" style="display: none;">
-            </div>
-            
-            <div class="tree-container" id="treeContainer">
-                <button class="fullscreen-btn" id="fullscreenBtn">
-                    <i class="fas fa-expand"></i>
-                </button>
-                <div class="tree" id="synthesisTree"></div>
-            </div>
-        </div>
-    </div>
 
-    <div id="recipeModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>合成表</h2>
-                <button class="close-btn" id="closeModalBtn">&times;</button>
+    <div class="container">
+        <h1>合成数据可视化</h1>
+
+        <div class="controls">
+            <input type="file" id="json_file_input" accept="application/json">
+            <button onclick="app.importData()">导入 JSON 数据</button>
+             <button onclick="app.clearStorageData()">清除存储数据</button>
+            <span id="status_message">准备就绪。</span>
+        </div>
+        
+        <div id="log_area">
+            <p style="margin: 0; padding: 0;">日志/状态信息:</p>
+        </div>
+
+        <div class="tabs">
+            <button id="tab1-btn" class="active" onclick="app.showTab(1)">矩形冰柱图</button>
+            <button id="tab2-btn" onclick="app.showTab(2)">有向无环图</button>
+        </div>
+
+        <div id="tab1" class="tab-content active">
+            <h2>矩形冰柱图</h2>
+            <div class="controls">
+                <input type="text" id="icicle_search_input" placeholder="输入元素名称实时搜索" oninput="app.renderRectangularTree()" list="item_names_datalist" style="width: 200px;">
+                
+                <span>深度 (D):</span>
+                <input type="number" id="min_depth_filter_icicle" placeholder="Min D" oninput="app.renderRectangularTree()">
+                <input type="number" id="max_depth_filter_icicle" placeholder="Max D" oninput="app.renderRectangularTree()">
+                
+                <span>宽度 (W):</span>
+                <input type="number" id="min_width_filter_icicle" placeholder="Min W" oninput="app.renderRectangularTree()">
+                <input type="number" id="max_width_filter_icicle" placeholder="Max W" oninput="app.renderRectangularTree()">
             </div>
-            <div class="recipe-list" id="recipeList"></div>
-            <div class="modal-buttons">
-                <button id="exportRecipesBtn" class="accent">
-                    <i class="fas fa-download"></i> 导出合成表
-                </button>
-                <button id="closeModalBtn2">
-                    <i class="fas fa-times"></i> 关闭
-                </button>
+            <div id="rectangular_tree_container_wrapper" class="chart-container">
+                 <div id="rectangular_tree_container" style="transform: translate(0px, 0px) scale(1);">
+                    <p style="padding: 20px;">请导入数据并等待图表渲染。</p>
+                 </div>
             </div>
         </div>
+
+        <div id="tab2" class="tab-content">
+            <h2>有向无环图 </h2>
+            <p>点击节点展开/收起其邻居。</p>
+            <div class="controls">
+                <input type="text" id="dag_search_input" placeholder="输入要搜索的元素名称" list="item_names_datalist" oninput="app.initialRenderDAG(document.getElementById('dag_search_input').value)" style="width: 200px;">
+                
+                <label class="toggle-switch">
+                    <input type="checkbox" id="non_simple_toggle" onchange="app._updateGraphFromExpandedSet()">
+                    <span class="slider"></span>
+                    显示非最简路径
+                </label>
+                
+                <label class="toggle-switch" style="min-width: 140px;">
+                    <input type="checkbox" id="expand_only_parents" checked onchange="app._updateGraphFromExpandedSet()">
+                    <span class="slider"></span>
+                    展开素材
+                </label>
+
+                <label class="toggle-switch" style="min-width: 140px;">
+                    <input type="checkbox" id="expand_children_and_peers" onchange="app._updateGraphFromExpandedSet()">
+                    <span class="slider"></span>
+                    展开产物
+                </label>
+            </div>
+            <div class="controls">
+                <span>深度 (D):</span>
+                <input type="number" id="min_depth_filter" placeholder="Min D" oninput="app._updateGraphFromExpandedSet()">
+                <input type="number" id="max_depth_filter" placeholder="Max D" oninput="app._updateGraphFromExpandedSet()">
+                
+                <span>宽度 (W):</span>
+                <input type="number" id="min_width_filter" placeholder="Min W" oninput="app._updateGraphFromExpandedSet()">
+                <input type="number" id="max_width_filter" placeholder="Max W" oninput="app._updateGraphFromExpandedSet()">
+            </div>
+
+            <div id="dag_graph_container" class="chart-container">
+                 <p style="padding: 20px;">请在上方输入框中输入元素名称进行搜索。</p>
+            </div>
+            <datalist id="item_names_datalist"></datalist>
+        </div>
+        
     </div>
 
     <script>
-        // 检查LZString是否加载，如果未加载则提示用户
-        if (typeof LZString === 'undefined') {
-            console.error('LZString未正确加载，请检查网络连接');
-            alert('LZString库加载失败，导入导出功能将不可用。请刷新页面重试。');
-        }
-
-        const INITIAL_ELEMENTS = ['金', '木', '水', '火', '土'];
-        const STORAGE_KEY = 'synthesis-data';
         
-        let ElementID = {}; 
-        let CanonicalPath = {}; 
-        let AllRules = []; 
-        let FSet = new Set();
-        let currentId = 1;
-        
-        const D = (id) => document.getElementById(id);
-        const totalElementsSpan = D('totalElements'), totalRecipesSpan = D('totalRecipes'),
-              pendingCombinationsSpan = D('pendingCombinations'), searchInput = D('searchInput'),
-              synthesisTree = D('synthesisTree'), treeContainer = D('treeContainer'),
-              importBtn = D('importBtn'), importFile = D('importFile'),
-              viewRecipesBtn = D('viewRecipesBtn'), recipeModal = D('recipeModal'),
-              recipeList = D('recipeList'), closeModalBtn = D('closeModalBtn'),
-              closeModalBtn2 = D('closeModalBtn2'), exportRecipesBtn = D('exportRecipesBtn'),
-              fullscreenBtn = D('fullscreenBtn'), collapseAllBtn = D('collapseAllBtn'),
-              expandAllBtn = D('expandAllBtn');
-
-        // 防抖函数，减少搜索时的频繁触发
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
+        class Item {
+            constructor(id, name, depth = -1, width = 1) {
+                this.id = id; this.name = name; this.depth = depth; this.width = width;
+            }
+            get isDetermined() { return this.id >= 0; }
         }
 
-        function init() {
-            loadFromLocalStorage();
-            updateUI();
-            addEventListeners();
-            
-            // 默认全部折叠
-            setTimeout(() => {
-                toggleAllNodes(false);
-            }, 100);
-        }
-        
-        function addEventListeners() {
-            importBtn.addEventListener('click', () => importFile.click());
-            importFile.addEventListener('change', importData);
-            viewRecipesBtn.addEventListener('click', showRecipeModal);
-            closeModalBtn.addEventListener('click', hideRecipeModal);
-            closeModalBtn2.addEventListener('click', hideRecipeModal);
-            exportRecipesBtn.addEventListener('click', exportRecipes);
-            
-            // 使用防抖处理搜索输入
-            searchInput.addEventListener('input', debounce(applySearchFilter, 300));
-            
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
-            collapseAllBtn.addEventListener('click', () => toggleAllNodes(false));
-            expandAllBtn.addEventListener('click', () => toggleAllNodes(true));
-            
-            window.addEventListener('click', (e) => {
-                if (e.target === recipeModal) hideRecipeModal();
-            });
+        class Recipe {
+            constructor(idA, idB, idC, simple = false) {
+                const [lid, rid] = idA <= idB ? [idA, idB] : [idB, idA];
+                this.id = [lid, rid, idC]; 
+                this.simple = simple; 
+            }
+            get sourceA() { return this.id[0]; }
+            get sourceB() { return this.id[1]; }
+            get product() { return this.id[2]; }
         }
 
-        function initializeData() {
-            ElementID = {};
-            CanonicalPath = {};
-            AllRules = [];
-            FSet.clear();
-            currentId = 1;
-            INITIAL_ELEMENTS.forEach(addNewElement);
-            initializeFSet();
-            recalculateCanonicalPaths();
-        }
+        class VisualizationApp {
+            constructor() {
+                this.items = new Map();     
+                this.recipes = new Map();   
+                this.initialElements = ['金', '木', '水', '火', '土'];
+                this.hasData = false;
+                this.recipesByProduct = new Map();  
+                this.recipesBySource = new Map();   
+                this.itemNames = new Map();         
+                
+                this.currentTab = 1;
+                this.network = null;    
+                this.dagNodes = null;   
+                this.dagEdges = null;   
 
-        function addNewElement(name) {
-            if (ElementID[name]) return ElementID[name];
-            const id = currentId++;
-            ElementID[name] = id;
-            CanonicalPath[id] = [id];
-            return id;
-        }
+                this.expandedNodeIds = new Set(); 
+                
+                this.ICICLE_BASE_UNIT_WIDTH = 35; 
+                this.ICICLE_NODE_MARGIN = 2;      
+                
+                this.icicleZoomLevel = 1.0;
+                this.icicleMaxDepth = 1; 
+                this.iciclePanX = 0;
+                this.iciclePanY = 0;
+                this.isDragging = false;
+                this.lastMouseX = 0;
+                this.lastMouseY = 0;
+            }
 
-        function getOrCreateElementId(name) {
-            return ElementID[name] || addNewElement(name);
-        }
+            logMessage(message, isError = false) {
+                const logArea = document.getElementById('log_area');
+                const statusEl = document.getElementById('status_message');
+                
+                statusEl.textContent = message;
+                statusEl.style.color = isError ? '#e53935' : '#4caf50';
 
-        function getElementName(id) {
-            return Object.keys(ElementID).find(name => ElementID[name] === id);
-        }
+                const now = new Date();
+                const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                
+                const logEntry = document.createElement('p');
+                logEntry.style.color = isError ? '#d32f2f' : '#555';
+                logEntry.innerHTML = `[${timeString}] ${message}`;
 
-        function initializeFSet() {
-            FSet.clear();
-            const knownCombinations = new Set(AllRules.map(rule => JSON.stringify(rule[0].sort((a, b) => a - b))));
-            const ids = Object.values(ElementID);
-            for (let i = 0; i < ids.length; i++) {
-                for (let j = i; j < ids.length; j++) {
-                    const combinationKey = JSON.stringify([ids[i], ids[j]].sort((a, b) => a - b));
-                    if (!knownCombinations.has(combinationKey)) {
-                        FSet.add(combinationKey);
-                    }
+                logArea.prepend(logEntry);
+
+                while (logArea.children.length > 20) {
+                    logArea.removeChild(logArea.lastElementChild);
                 }
             }
-        }
 
-        function recalculateCanonicalPaths() {
-            let changed = true;
-            while (changed) {
-                changed = false;
-                Object.values(ElementID).forEach(id => {
-                    AllRules.forEach(([sources, targetId]) => {
-                        if (targetId !== id) return;
-                        const [lId, rId] = sources;
-                        const pathL = CanonicalPath[lId] || [lId];
-                        const pathR = CanonicalPath[rId] || [rId];
-                        let potentialPath = [...new Set([...pathL, ...pathR])].sort((a, b) => a - b);
+
+            loadInitialData() {
+                const storedData = localStorage.getItem('synthesis_data');
+                if (storedData) {
+                    try {
+                        const importedData = JSON.parse(storedData);
+                        this._processData(importedData, '数据已从本地存储加载。');
+                        return;
+                    } catch (e) {
+                        this.logMessage("加载本地数据失败。请导入新的 JSON 文件。", true);
+                        console.error("加载本地数据失败:", e);
+                    }
+                }
+                this.logMessage('请导入 JSON 数据。', false);
+            }
+
+            saveDataToStorage(data) {
+                try {
+                    localStorage.setItem('synthesis_data', JSON.stringify(data));
+                    this.logMessage("数据已自动保存到本地存储。", false);
+                } catch (e) {
+                    this.logMessage("保存数据到本地存储失败。", true);
+                    console.error("保存数据到本地存储失败:", e);
+                }
+            }
+
+            clearStorageData() {
+                localStorage.removeItem('synthesis_data');
+                this.hasData = false;
+                this.logMessage('已清除本地存储的数据。请重新导入文件。', true);
+                document.getElementById('rectangular_tree_container').innerHTML = '<p style="padding: 20px;">请导入数据并等待图表渲染。</p>';
+                document.getElementById('dag_graph_container').innerHTML = '<p style="padding: 20px;">请在上方输入框中输入元素名称进行搜索。</p>';
+                this.icicleZoomLevel = 1.0;
+                this.iciclePanX = 0;
+                this.iciclePanY = 0;
+                this._applyIcicleTransform();
+            }
+
+            importData() {
+                const input = document.getElementById('json_file_input');
+                const file = input.files[0];
+                if (!file) {
+                    this.logMessage('请选择一个 JSON 文件。', true);
+                    return;
+                }
+
+                this.logMessage('正在读取文件...');
+                const reader = new FileReader();
+                
+                reader.onload = async (e) => {
+                    await new Promise(resolve => setTimeout(resolve, 0)); 
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (!importedData.items || !importedData.recipes) {
+                            throw new Error("文件格式不正确，缺少 items 或 recipes 字段。");
+                        }
                         
-                        if (isPathBetter(potentialPath, CanonicalPath[id])) {
-                            CanonicalPath[id] = potentialPath;
-                            changed = true;
+                        this._processData(importedData, `数据导入成功！总Item数: ${importedData.items.length}。`);
+                        this.saveDataToStorage(importedData);
+
+                    } catch (error) {
+                        this.logMessage(`数据导入失败: ${error.message}`, true);
+                        this.hasData = false;
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            _processData(importedData, successMessage) {
+                this.items = new Map();
+                this.recipes = new Map(importedData.recipes);
+                
+                let maxDepth = 1;
+                importedData.items.forEach(([id, itemData]) => {
+                    const item = Object.assign(new Item(), itemData);
+                    this.items.set(item.id, item);
+                    if (item.isDetermined) {
+                        this.itemNames.set(item.name, item);
+                        if (item.depth > maxDepth) maxDepth = item.depth;
+                    }
+                });
+                this.icicleMaxDepth = maxDepth; 
+
+                this.preprocessRecipes();
+                this.hasData = true;
+
+                this.logMessage(successMessage, false);
+                this.initSelectorsAndGraphs();
+            }
+
+            preprocessRecipes() {
+                this.recipesByProduct.clear();
+                this.recipesBySource.clear();
+
+                this.recipes.forEach((isSimple, key) => {
+                    const [lid, rid, pid] = JSON.parse(key);
+                    const recipe = new Recipe(lid, rid, pid, isSimple);
+
+                    if (!this.recipesByProduct.has(pid)) this.recipesByProduct.set(pid, []);
+                    this.recipesByProduct.get(pid).push(recipe);
+
+                    if (!this.recipesBySource.has(lid)) this.recipesBySource.set(lid, []);
+                    this.recipesBySource.get(lid).push(recipe);
+                    
+                    if (lid !== rid) {
+                        if (!this.recipesBySource.has(rid)) this.recipesBySource.set(rid, []);
+                        this.recipesBySource.get(rid).push(recipe);
+                    }
+                });
+            }
+
+            getItemById(id) {
+                return this.items.get(id);
+            }
+
+            getItemByName(name) {
+                return this.itemNames.get(name);
+            }
+
+            initSelectorsAndGraphs() {
+                this.renderDatalist();
+                this.renderRectangularTree(); 
+                this.showTab(this.currentTab);
+            }
+
+            showTab(tabNumber) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.tabs button').forEach(el => el.classList.remove('active'));
+
+                document.getElementById(`tab${tabNumber}`).classList.add('active');
+                document.getElementById(`tab${tabNumber}-btn`).classList.add('active');
+                this.currentTab = tabNumber;
+                
+                if (tabNumber === 1 && this.hasData) {
+                    this.renderRectangularTree();
+                }
+            }
+            
+            renderDatalist() {
+                const datalist = document.getElementById('item_names_datalist');
+                const determinedItems = Array.from(this.items.values()).filter(item => item.isDetermined);
+                determinedItems.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+                datalist.innerHTML = determinedItems.map(item => `<option value="${item.name}">`).join('');
+            }
+
+
+            setupIcicleZoom() {
+                const wrapper = document.getElementById('rectangular_tree_container_wrapper');
+                
+                wrapper.addEventListener('mousedown', (e) => {
+                    if (this.currentTab !== 1 || e.button !== 0) return; 
+                    this.isDragging = true;
+                    this.lastMouseX = e.clientX;
+                    this.lastMouseY = e.clientY;
+                    wrapper.classList.add('is-dragging');
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!this.isDragging || this.currentTab !== 1) return;
+                    
+                    const dx = e.clientX - this.lastMouseX;
+                    const dy = e.clientY - this.lastMouseY;
+                    
+                    this.iciclePanX += dx / this.icicleZoomLevel;
+                    this.iciclePanY += dy / this.icicleZoomLevel;
+
+                    this.iciclePanY = Math.min(0, this.iciclePanY); 
+
+                    this.lastMouseX = e.clientX;
+                    this.lastMouseY = e.clientY;
+
+                    this._applyIcicleTransform();
+                });
+
+                document.addEventListener('mouseup', () => {
+                    this.isDragging = false;
+                    wrapper.classList.remove('is-dragging');
+                });
+
+
+                wrapper.addEventListener('wheel', (e) => {
+                    if (!this.hasData || this.currentTab !== 1) return;
+                    e.preventDefault(); 
+
+                    const scaleFactor = 1.2; 
+                    const oldZoom = this.icicleZoomLevel;
+                    
+                    if (e.deltaY < 0) {
+                        this.icicleZoomLevel = Math.min(4.0, oldZoom * scaleFactor);
+                    } else {
+                        this.icicleZoomLevel = Math.max(0.2, oldZoom / scaleFactor);
+                    }
+                    
+                    const rect = wrapper.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+
+                    const unscaledMouseX = (mouseX / oldZoom) - (this.iciclePanX);
+                    const unscaledMouseY = (mouseY / oldZoom) - (this.iciclePanY);
+
+                    this.iciclePanX = (mouseX / this.icicleZoomLevel) - unscaledMouseX;
+                    this.iciclePanY = (mouseY / this.icicleZoomLevel) - unscaledMouseY;
+                    
+                    this.iciclePanY = Math.min(0, this.iciclePanY); 
+
+                    this._applyIcicleTransform();
+                }, { passive: false });
+            }
+            
+            _applyIcicleTransform() {
+                const container = document.getElementById('rectangular_tree_container');
+                container.style.transform = `translate(${this.iciclePanX}px, ${this.iciclePanY}px) scale(${this.icicleZoomLevel})`;
+            }
+
+            _getDepthColor(depth, isHighlight = false) {
+                const maxDepth = this.icicleMaxDepth || 10; 
+                
+                let hue; 
+                let saturation;
+                let lightness;
+                let opacity = 0.95;
+                
+                if (depth === 0) {
+                    hue = 85; 
+                    saturation = 75;
+                    lightness = 55;
+                } else {
+                    hue = 150; 
+                    saturation = 65 - (depth / maxDepth) * 15;
+                    lightness = 70 - (depth / maxDepth) * 20;
+                }
+
+                if (isHighlight) {
+                    hue = 50; 
+                    saturation = 90;
+                    lightness = 60;
+                    opacity = 1.0;
+                }
+
+                return `hsla(${hue}, ${saturation}%, ${lightness}%, ${opacity})`;
+            }
+
+            getIcicleDecomposition(itemId) {
+                const item = this.getItemById(itemId);
+                if (!item || !item.isDetermined) return null;
+
+                const node = {
+                    id: item.id,
+                    name: item.name,
+                    depth: item.depth,
+                    width: item.width,
+                    children: []
+                };
+
+                if (item.depth === 0) return node;
+
+                const simpleRecipes = (this.recipesByProduct.get(itemId) || [])
+                    .filter(recipe => recipe.simple === true)
+                    .filter(recipe => this.getItemById(recipe.sourceA)?.isDetermined && this.getItemById(recipe.sourceB)?.isDetermined);
+
+                if (simpleRecipes.length === 0) return node;
+                
+                const recipe = simpleRecipes[0];
+                
+                const childA = this.getIcicleDecomposition(recipe.sourceA);
+                if (childA) node.children.push(childA);
+                
+                if (recipe.sourceA === recipe.sourceB) {
+                     if (childA) node.children.push(childA);
+                } else {
+                    const childB = this.getIcicleDecomposition(recipe.sourceB);
+                    if (childB) node.children.push(childB);
+                }
+                
+                if (node.children.length > 0) {
+                     node.width = node.children.reduce((sum, child) => sum + child.width, 0);
+                } else {
+                     node.width = 1;
+                }
+                
+                return node;
+            }
+
+            renderRectangularTree() {
+                if (!this.hasData) return;
+                const container = document.getElementById('rectangular_tree_container');
+                const wrapper = document.getElementById('rectangular_tree_container_wrapper');
+                const searchName = document.getElementById('icicle_search_input').value.trim().toLowerCase();
+                
+                const minDepth = parseInt(document.getElementById('min_depth_filter_icicle').value) || 0;
+                const maxDepth = parseInt(document.getElementById('max_depth_filter_icicle').value) || this.icicleMaxDepth + 1;
+                const minWidth = parseInt(document.getElementById('min_width_filter_icicle').value) || 0;
+                const maxWidth = parseInt(document.getElementById('max_width_filter_icicle').value) || 10000; 
+                
+                container.innerHTML = ''; 
+                this._applyIcicleTransform();
+
+                let icicleRoots = Array.from(this.items.values())
+                    .filter(item => item.isDetermined && item.depth > 0);
+                
+                icicleRoots = icicleRoots.filter(item => 
+                    item.depth >= minDepth && item.depth <= maxDepth && 
+                    item.width >= minWidth && item.width <= maxWidth
+                );
+                
+                if (icicleRoots.length === 0) {
+                    container.innerHTML = `<p style="padding: 20px;">根据当前筛选条件，没有发现可分解的元素 (D>0)。</p>`;
+                    this.logMessage("冰柱图渲染完成：没有满足筛选条件的元素。", false);
+                    return;
+                }
+
+                const trees = icicleRoots.map(rootItem => this.getIcicleDecomposition(rootItem.id)).filter(t => t);
+                
+                const filteredTrees = trees.filter(tree => {
+                    if (!searchName) return true;
+                    let found = false;
+                    const checkNode = (node) => {
+                        if (node.name.toLowerCase().includes(searchName)) { found = true; return; }
+                        node.children.forEach(checkNode);
+                    };
+                    checkNode(tree);
+                    return found;
+                });
+                
+                if (filteredTrees.length === 0) {
+                     container.innerHTML = `<p style="padding: 20px;">未找到包含 "${searchName}" 的 Simple 路径。</p>`;
+                     this.logMessage(`冰柱图搜索完成：未找到包含 "${searchName}" 的路径。`, false);
+                    return;
+                }
+
+                const totalIcicleWidthUnits = filteredTrees.reduce((sum, tree) => sum + tree.width, 0);
+                const totalChartWidth = totalIcicleWidthUnits * (this.ICICLE_BASE_UNIT_WIDTH) + filteredTrees.length * 2 * this.ICICLE_NODE_MARGIN; 
+                
+                container.style.width = `${totalChartWidth}px`; 
+                
+                let targetNodeX = -1; 
+                let accumulatedWidth = 0; 
+                
+                filteredTrees.forEach(tree => {
+                    const rootPixelWidth = tree.width * this.ICICLE_BASE_UNIT_WIDTH + 2 * this.ICICLE_NODE_MARGIN;
+                    
+                    const rootDiv = document.createElement('div');
+                    rootDiv.className = 'icicle-root';
+                    rootDiv.style.width = `${rootPixelWidth}px`; 
+
+                    const rootHtml = this._renderIcicleNode(tree, tree.width, searchName, accumulatedWidth, (foundX) => {
+                        if (targetNodeX === -1) targetNodeX = foundX;
+                    });
+                    rootDiv.innerHTML = rootHtml.html;
+                    container.appendChild(rootDiv);
+                    
+                    accumulatedWidth += rootPixelWidth;
+                });
+                
+                if (targetNodeX !== -1) {
+                    const wrapperRect = wrapper.getBoundingClientRect();
+                    const wrapperCenterX = wrapperRect.width / 2;
+                    
+                    this.iciclePanX = (wrapperCenterX / this.icicleZoomLevel) - targetNodeX;
+                    this.iciclePanY = 0; 
+
+                    this._applyIcicleTransform();
+                    this.logMessage(`冰柱图搜索定位到 "${searchName}" 结果。`, false);
+                } else {
+                    this.logMessage(`冰柱图渲染完成，显示 ${filteredTrees.length} 个根元素。`, false);
+                }
+            }
+
+            _renderIcicleNode(node, parentWidthUnits, searchName, currentX, setTargetXCallback) {
+                const isHighlight = searchName.length > 0 && node.name.toLowerCase().includes(searchName);
+                const color = this._getDepthColor(node.depth, isHighlight);
+                
+                const nodeWidthPercent = (node.width / parentWidthUnits) * 100;
+                
+                const nodePixelWidth = node.width * this.ICICLE_BASE_UNIT_WIDTH + 2 * this.ICICLE_NODE_MARGIN;
+                
+                let html = `<div class="icicle-node-container" style="width: ${nodeWidthPercent}%; min-width: 10px;">`;
+                
+                html += `<div class="icicle-node-label" 
+                            style="background-color: ${color};" 
+                            title="ID:${node.id} | D:${node.depth} | W:${node.width}"
+                            data-node-id="${node.id}">
+                            ${node.name}
+                        </div>`;
+                
+                if (isHighlight && setTargetXCallback && setTargetXCallback.isCalled !== true) {
+                    const nodeCenterX = currentX + nodePixelWidth / 2;
+                    setTargetXCallback(nodeCenterX);
+                    setTargetXCallback.isCalled = true; 
+                }
+
+                if (node.children.length > 0) {
+                    html += `<div class="icicle-children-container">`;
+                    
+                    let childAccumulatedX = currentX + this.ICICLE_NODE_MARGIN; 
+                    node.children.forEach(child => {
+                        const childResult = this._renderIcicleNode(child, node.width, searchName, childAccumulatedX, setTargetXCallback);
+                        html += childResult.html;
+                        childAccumulatedX += child.width * this.ICICLE_BASE_UNIT_WIDTH + 2 * this.ICICLE_NODE_MARGIN;
+                    });
+
+                    html += `</div>`; 
+                } else {
+                     html += `<div style="flex-grow: 1;"></div>`;
+                }
+
+                html += `</div>`; 
+                return { html: html, width: nodePixelWidth };
+            }
+
+
+            initialRenderDAG(searchName) {
+                if (!this.hasData) return;
+                const container = document.getElementById('dag_graph_container');
+                const searchItem = this.getItemByName(searchName.trim());
+                
+                if (this.network) this.network.destroy();
+                this.network = null;
+                this.expandedNodeIds.clear();
+
+                if (!searchName || !searchItem || !searchItem.isDetermined) {
+                     container.innerHTML = `<p style="padding: 20px;">请输入一个有效的确定元素名称进行搜索。</p>`;
+                     return;
+                }
+
+                this.expandedNodeIds.add(searchItem.id);
+                
+                this.dagNodes = new vis.DataSet();
+                this.dagEdges = new vis.DataSet(); 
+
+                this.renderNetwork(); 
+                this._updateGraphFromExpandedSet(); 
+                
+                this.logMessage(`DAG：开始搜索元素 "${searchName}"。`, false);
+                
+                this.network.once("stabilizationIterationsDone", () => {
+                    this.network.setOptions({ physics: false });
+                    this.network.focus(searchItem.id, {scale: 1.0, animation: {duration: 500, easingFunction: "easeInOutQuad"}});
+                    this.logMessage(`DAG：图表稳定，聚焦到 "${searchName}"。`, false);
+                });
+            }
+            
+            toggleNodeExpansion(nodeId) {
+                 if (!this.dagNodes.get(nodeId)) return; 
+
+                this.dagNodes.update({ id: nodeId, isExpanding: true, color: { border: '#e53935' } });
+                
+                if (this.expandedNodeIds.has(nodeId)) {
+                    this.expandedNodeIds.delete(nodeId);
+                    this.logMessage(`DAG：收起节点 "${this.getItemById(nodeId).name}"。`, false);
+                } else {
+                    this.expandedNodeIds.add(nodeId);
+                    this.logMessage(`DAG：展开节点 "${this.getItemById(nodeId).name}"。`, false);
+                }
+                
+                this._updateGraphFromExpandedSet();
+
+                const isExpanded = this.expandedNodeIds.has(nodeId);
+                const isBase = this.getItemById(nodeId)?.depth === 0;
+                const newBorderColor = isExpanded ? '#1e88e5' : (isBase ? '#f57c00' : '#3f51b5');
+                
+                this.dagNodes.update({ 
+                    id: nodeId, 
+                    isExpanding: false, 
+                    label: this.getItemById(nodeId).name, 
+                    color: { border: newBorderColor } 
+                });
+            }
+
+
+            _updateGraphFromExpandedSet() {
+                if (!this.dagNodes || !this.dagEdges || !this.network) return;
+
+                const showNonSimple = document.getElementById('non_simple_toggle')?.checked ?? false;
+                const onlyParents = document.getElementById('expand_only_parents')?.checked ?? true;
+                const childrenAndPeers = document.getElementById('expand_children_and_peers')?.checked ?? false;
+                
+                const minDepth = parseInt(document.getElementById('min_depth_filter').value) || 0;
+                const maxDepth = parseInt(document.getElementById('max_depth_filter').value) || this.icicleMaxDepth + 1;
+                const minWidth = parseInt(document.getElementById('min_width_filter').value) || 0;
+                const maxWidth = parseInt(document.getElementById('max_width_filter').value) || 10000; 
+
+                const nodesToKeep = new Set();
+                const edgesToKeep = [];
+                
+                this.expandedNodeIds.forEach(centerId => {
+                    const centerItem = this.getItemById(centerId);
+                    if (!centerItem || !centerItem.isDetermined) return;
+                    
+                    nodesToKeep.add(centerId); 
+                    
+                    if (onlyParents) {
+                        const recipesForProduct = this.recipesByProduct.get(centerId) || [];
+                        recipesForProduct.forEach(recipe => {
+                            if (recipe.simple || showNonSimple) {
+                                nodesToKeep.add(recipe.sourceA);
+                                edgesToKeep.push(this._createEdgeDefinition(recipe.sourceA, centerId, recipe));
+                                
+                                if (recipe.sourceA !== recipe.sourceB) {
+                                    nodesToKeep.add(recipe.sourceB);
+                                    edgesToKeep.push(this._createEdgeDefinition(recipe.sourceB, centerId, recipe));
+                                }
+                            }
+                        });
+                    }
+
+                    if (childrenAndPeers) {
+                        const recipesForSource = this.recipesBySource.get(centerId) || [];
+                        recipesForSource.forEach(recipe => {
+                            if (recipe.simple || showNonSimple) {
+                                const otherSourceId = recipe.sourceA === centerId ? recipe.sourceB : recipe.sourceA;
+                                
+                                nodesToKeep.add(recipe.product);
+                                edgesToKeep.push(this._createEdgeDefinition(centerId, recipe.product, recipe));
+                                
+                                nodesToKeep.add(otherSourceId);
+                                edgesToKeep.push(this._createEdgeDefinition(otherSourceId, recipe.product, recipe)); 
+                            }
+                        });
+                    }
+                });
+                
+                const filteredNodesToKeep = new Set();
+                nodesToKeep.forEach(id => {
+                     const item = this.getItemById(id);
+                     if (item?.isDetermined && 
+                         item.depth >= minDepth && item.depth <= maxDepth && 
+                         item.width >= minWidth && item.width <= maxWidth) {
+                        filteredNodesToKeep.add(id);
+                     }
+                });
+                
+                const initialSearchId = this.getItemByName(document.getElementById('dag_search_input').value.trim())?.id;
+                if (initialSearchId && this.expandedNodeIds.has(initialSearchId) && !filteredNodesToKeep.has(initialSearchId)) {
+                    this.expandedNodeIds.clear(); 
+                    this.dagNodes.clear();
+                    this.dagEdges.clear();
+                    this.network.setData({ nodes: this.dagNodes, edges: this.dagEdges });
+                    this.logMessage("DAG：初始搜索节点被 D/W 筛选器排除，已重置图表。", true);
+                    return; 
+                }
+                
+                const currentNodes = this.dagNodes.getIds();
+                const nodesToRemove = currentNodes.filter(id => !filteredNodesToKeep.has(id));
+                const nodesToAdd = Array.from(filteredNodesToKeep).filter(id => !this.dagNodes.get(id));
+                
+                const nodesToUpdate = currentNodes.filter(id => filteredNodesToKeep.has(id)).map(id => {
+                    const item = this.getItemById(id);
+                    const isExpanded = this.expandedNodeIds.has(id);
+                    const isBase = item?.depth === 0;
+                    
+                    const borderColor = isExpanded ? '#1e88e5' : (isBase ? '#f57c00' : '#3f51b5');
+                    
+                    return {
+                        id: id,
+                        label: item.name, 
+                        color: {
+                            border: borderColor
+                        }
+                    };
+                });
+
+
+                this.dagNodes.remove(nodesToRemove);
+                this.dagNodes.update(nodesToUpdate);
+                this._addNodesToGraph(nodesToAdd); 
+
+                const uniqueEdges = [];
+                const addedEdges = new Set();
+                this.dagEdges.clear();
+                
+                edgesToKeep.forEach(edge => {
+                    if (filteredNodesToKeep.has(edge.from) && filteredNodesToKeep.has(edge.to)) {
+                        if (!addedEdges.has(edge.id)) {
+                            uniqueEdges.push(edge);
+                            addedEdges.add(edge.id);
+                        }
+                    }
+                });
+                
+                this.dagEdges.add(uniqueEdges);
+
+                this.network.setOptions({ physics: true });
+                this.network.once("stabilizationIterationsDone", () => {
+                    this.network.setOptions({ physics: false });
+                    this.network.fit();
+                    this.logMessage("DAG：图表筛选/更新完成。", false);
+                });
+            }
+
+            _createEdgeDefinition(fromId, toId, recipe) {
+                const recipeKey = JSON.stringify(recipe.id);
+                const isSimple = recipe.simple;
+                const edgeId = `${fromId}_to_${toId}_${recipeKey}`;
+                
+                const edgeColor = isSimple ? '#4caf50' : '#9e9e9e'; 
+                const edgeDashes = !isSimple;
+                const baseTitle = `${this.getItemById(recipe.sourceA)?.name} + ${this.getItemById(recipe.sourceB)?.name} = ${this.getItemById(recipe.product)?.name}\nSimple: ${isSimple ? 'Yes' : 'No'}`;
+
+                return {
+                    id: edgeId,
+                    from: fromId,
+                    to: toId,
+                    arrows: 'to',
+                    color: { color: edgeColor }, 
+                    dashes: edgeDashes,
+                    width: 2,
+                    title: baseTitle,
+                    isSimple: isSimple
+                };
+            }
+
+            _addNodesToGraph(itemIds) {
+                const nodesToAdd = [];
+                itemIds.forEach(itemId => {
+                    const item = this.getItemById(itemId);
+                    if (!item || !item.isDetermined) return;
+                    
+                    const isExpanded = this.expandedNodeIds.has(itemId);
+                    const isBase = item.depth === 0;
+
+                    const borderColor = isExpanded ? '#1e88e5' : (isBase ? '#f57c00' : '#3f51b5');
+
+                    nodesToAdd.push({
+                        id: itemId,
+                        label: item.name,
+                        title: `ID: ${item.id}\nDepth: ${item.depth}\nWidth: ${item.width}\nExpanded: ${isExpanded ? 'Yes' : 'No'}`,
+                        shape: 'box',
+                        size: 30, 
+                        borderWidth: 3, 
+                        font: { color: 'black', size: 14 },
+                        isExpanded: isExpanded, 
+                        color: {
+                            background: isBase ? '#ff9800' : '#bbdefb', 
+                            border: borderColor, 
+                            highlight: { background: '#ffcdd2', border: '#e53935' }
                         }
                     });
                 });
+                this.dagNodes.add(nodesToAdd);
             }
-        }
 
-        function isPathBetter(newPath, currentPath) {
-            if (!currentPath) return true;
-            if (newPath.length < currentPath.length) return true;
-            if (newPath.length > currentPath.length) return false;
-            return newPath.join(',') < currentPath.join(',');
-        }
 
-        function updateAndRenderTree() {
-            const treeData = buildTreeData();
-            renderTree(treeData);
-            updateUI();
-        }
+            renderNetwork() {
+                const container = document.getElementById('dag_graph_container');
+                container.innerHTML = ''; 
 
-        function getElementDepth(id) {
-            return (CanonicalPath[id] || []).length - 1;
-        }
-
-        function buildTreeData() {
-            const tree = {};
-            Object.keys(ElementID).forEach(name => {
-                tree[name] = { 
-                    name, 
-                    depth: getElementDepth(ElementID[name]), 
-                    recipes: [], 
-                    isInitial: INITIAL_ELEMENTS.includes(name),
-                    id: ElementID[name]
+                const data = { nodes: this.dagNodes, edges: this.dagEdges };
+                const options = {
+                    layout: { hierarchical: false },
+                    edges: {
+                        smooth: { type: 'dynamic' },
+                        arrows: 'to',
+                        width: 1.5,
+                    },
+                    physics: {
+                        enabled: true,
+                        barnesHut: {
+                            gravitationalConstant: -2000, 
+                            centralGravity: 0.1, 
+                            springLength: 200, 
+                            springConstant: 0.05
+                        },
+                        stabilization: {
+                            iterations: 1500, 
+                            updateInterval: 50, 
+                            onlyNecessary: true
+                        }
+                    },
+                    interaction: { dragNodes: true, zoomView: true, dragView: true }
                 };
-            });
 
-            AllRules.forEach(([sources, targetId]) => {
-                const targetName = getElementName(targetId);
-                const source1Name = getElementName(sources[0]);
-                const source2Name = getElementName(sources[1]);
-                if (targetName && source1Name && source2Name) {
-                    tree[targetName].recipes.push({ a: source1Name, b: source2Name });
-                }
-            });
+                this.network = new vis.Network(container, data, options);
 
-            return tree;
-        }
-
-        function renderTree(treeData) {
-            const sortedNames = Object.keys(treeData).sort((a, b) => {
-                const aIsInitial = INITIAL_ELEMENTS.includes(a);
-                const bIsInitial = INITIAL_ELEMENTS.includes(b);
-                
-                if (aIsInitial && !bIsInitial) return -1;
-                if (!aIsInitial && bIsInitial) return 1;
-                
-                const aCPath = CanonicalPath[ElementID[a]];
-                const bCPath = CanonicalPath[ElementID[b]];
-                
-                if (aCPath.length !== bCPath.length) {
-                    return aCPath.length - bCPath.length;
-                }
-                
-                for (let i = 0; i < aCPath.length; i++) {
-                    if (aCPath[i] !== bCPath[i]) {
-                        return aCPath[i] - bCPath[i];
-                    }
-                }
-                
-                return a.localeCompare(b, 'zh-Hans-CN');
-            });
-
-            if (sortedNames.length === 0) {
-                synthesisTree.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-secondary)"><i class="fas fa-tree" style="font-size:3rem;margin-bottom:15px;color:var(--primary-dark)"></i><h3 style="font-size:1.3rem;color:var(--text-primary)">暂无合成数据</h3></div>`;
-                return;
-            }
-
-            const fragment = document.createDocumentFragment();
-            const rootContainer = document.createElement('div');
-            rootContainer.className = 'tree-root';
-            
-            sortedNames.forEach(name => {
-                const nodeElement = createNodeElement(treeData[name], treeData, new Set());
-                if (nodeElement) {
-                    rootContainer.appendChild(nodeElement);
-                }
-            });
-            
-            fragment.appendChild(rootContainer);
-            synthesisTree.innerHTML = '';
-            synthesisTree.appendChild(fragment);
-
-            synthesisTree.querySelectorAll('.node-expand').forEach(el => {
-                el.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const node = e.target.closest('.tree-node');
-                    node.classList.toggle('collapsed');
-                    node.classList.toggle('expanded');
-                });
-            });
-        }
-        
-        function createNodeElement(node, treeData, rendered) {
-            if (rendered.has(node.name)) return null;
-            rendered.add(node.name);
-
-            const nodeEl = document.createElement('div');
-            nodeEl.className = `tree-node collapsed ${node.isInitial ? 'initial-element' : ''}`;
-            nodeEl.dataset.name = node.name;
-
-            const hasRecipes = node.recipes.length > 0;
-
-            nodeEl.innerHTML = `
-                <div class="node-content ${node.isInitial ? 'initial-item' : ''}">
-                    <span class="node-expand" ${!hasRecipes ? 'style="visibility: hidden;"' : ''}></span>
-                    <span class="item-name">${node.name}</span>
-                </div>
-            `;
-
-            if (hasRecipes) {
-                const childrenEl = document.createElement('div');
-                childrenEl.className = 'children';
-                
-                node.recipes.forEach(recipe => {
-                    const recipePath = document.createElement('div');
-                    recipePath.className = 'recipe-path';
-                    
-                    const recipeContent = document.createElement('div');
-                    recipeContent.className = 'recipe-path-content';
-                    
-                    const ingredientA = document.createElement('span');
-                    ingredientA.className = 'recipe-ingredient';
-                    ingredientA.textContent = recipe.a;
-                    ingredientA.dataset.name = recipe.a;
-                    recipeContent.appendChild(ingredientA);
-                    
-                    const connector = document.createElement('span');
-                    connector.className = 'recipe-connector';
-                    connector.innerHTML = '<i class="fas fa-plus"></i>';
-                    recipeContent.appendChild(connector);
-                    
-                    const ingredientB = document.createElement('span');
-                    ingredientB.className = 'recipe-ingredient';
-                    ingredientB.textContent = recipe.b;
-                    ingredientB.dataset.name = recipe.b;
-                    recipeContent.appendChild(ingredientB);
-                    
-                    const equals = document.createElement('span');
-                    equals.className = 'recipe-connector';
-                    equals.innerHTML = '<i class="fas fa-equals"></i>';
-                    recipeContent.appendChild(equals);
-                    
-                    const result = document.createElement('span');
-                    result.className = 'recipe-ingredient';
-                    result.textContent = node.name;
-                    recipeContent.appendChild(result);
-                    
-                    recipePath.appendChild(recipeContent);
-                    childrenEl.appendChild(recipePath);
-                    
-                    const childA = treeData[recipe.a];
-                    if (childA) {
-                        const childNode = createNodeElement(childA, treeData, new Set(rendered));
-                        if (childNode) childrenEl.appendChild(childNode);
-                    }
-                    
-                    const childB = treeData[recipe.b];
-                    if (childB && childB.name !== childA.name) {
-                        const childNode = createNodeElement(childB, treeData, new Set(rendered));
-                        if (childNode) childrenEl.appendChild(childNode);
+                this.network.on("click", (params) => {
+                    if (params.nodes.length > 0) {
+                        const nodeId = params.nodes[0];
+                        this.toggleNodeExpansion(nodeId);
                     }
                 });
-                
-                nodeEl.appendChild(childrenEl);
-            }
-            
-            return nodeEl;
-        }
-
-        function applySearchFilter() {
-            const term = searchInput.value.trim().toLowerCase();
-            const allNodes = synthesisTree.querySelectorAll('.tree-node');
-            const allItemNodes = synthesisTree.querySelectorAll('.node-content, .recipe-ingredient');
-
-            synthesisTree.classList.toggle('search-active', !!term);
-            allNodes.forEach(n => n.classList.remove('is-hidden', 'is-match', 'is-ancestor'));
-            allItemNodes.forEach(n => n.classList.remove('highlight'));
-
-            if (!term) {
-                allNodes.forEach(n => {
-                    const nodeName = n.dataset.name;
-                    const hasRecipes = n.querySelector('.children') && n.querySelector('.children').children.length > 0;
-                    // 默认保持折叠状态
-                    n.classList.add('collapsed');
-                    n.classList.remove('expanded');
-                });
-                return;
-            }
-
-            const matchedNodes = new Set();
-            
-            allNodes.forEach(node => {
-                const nodeName = node.dataset.name;
-                
-                if (nodeName.toLowerCase().includes(term)) {
-                    node.classList.add('is-match');
-                    node.querySelector('.node-content').classList.add('highlight');
-                    matchedNodes.add(node);
-                }
-            });
-
-            matchedNodes.forEach(node => {
-                let parent = node.parentElement.closest('.tree-node');
-                while (parent) {
-                    parent.classList.add('is-ancestor');
-                    parent = parent.parentElement.closest('.tree-node');
-                }
-            });
-            
-            allNodes.forEach(node => {
-                const isMatch = node.classList.contains('is-match');
-                const isAncestor = node.classList.contains('is-ancestor');
-                const isDescendant = node.closest('.tree-node.is-match');
-
-                if (!isMatch && !isAncestor && !isDescendant) {
-                    node.classList.add('is-hidden');
-                } else {
-                    node.classList.add('expanded');
-                    node.classList.remove('collapsed');
-                }
-            });
-        }
-        
-        function toggleAllNodes(expand) {
-            synthesisTree.querySelectorAll('.tree-node').forEach(node => {
-                node.classList.toggle('expanded', expand);
-                node.classList.toggle('collapsed', !expand);
-            });
-        }
-        
-        function updateUI() {
-            const elementCount = Object.keys(ElementID).length;
-            totalElementsSpan.textContent = elementCount;
-            totalRecipesSpan.textContent = AllRules.length;
-            pendingCombinationsSpan.textContent = FSet.size;
-        }
-        
-        function showRecipeModal() {
-            let recipeText = '';
-            AllRules.forEach(rule => {
-                const [sources, targetId] = rule;
-                const source1Name = getElementName(sources[0]);
-                const source2Name = getElementName(sources[1]);
-                const targetName = getElementName(targetId);
-                recipeText += `<div class="recipe-item">${source1Name} + ${source2Name} = ${targetName}</div>`;
-            });
-            
-            recipeList.innerHTML = recipeText;
-            recipeModal.style.display = 'flex';
-        }
-        
-        function hideRecipeModal() {
-            recipeModal.style.display = 'none';
-        }
-        
-        function exportRecipes() {
-            let recipeText = '';
-            AllRules.forEach(rule => {
-                const [sources, targetId] = rule;
-                const source1Name = getElementName(sources[0]);
-                const source2Name = getElementName(sources[1]);
-                const targetName = getElementName(targetId);
-                recipeText += `${source1Name} + ${source2Name} = ${targetName}\n`;
-            });
-            
-            const blob = new Blob([recipeText], { type: 'text/plain' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `synthesis-recipes-${new Date().toISOString().slice(0,10)}.txt`;
-            a.click();
-            URL.revokeObjectURL(a.href);
-        }
-        
-        function toggleFullscreen() {
-            if (treeContainer.classList.contains('fullscreen')) {
-                treeContainer.classList.remove('fullscreen');
-                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
-            } else {
-                treeContainer.classList.add('fullscreen');
-                fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
             }
         }
-        
-        function saveToLocalStorage() {
-            const dataStr = JSON.stringify({ ElementID, AllRules, CanonicalPath, currentId });
-            const compressed = LZString.compressToBase64(dataStr);
-            localStorage.setItem(STORAGE_KEY, compressed);
-        }
-        
-        function loadFromLocalStorage() {
-            const compressed = localStorage.getItem(STORAGE_KEY);
-            if (compressed) {
-                try {
-                    const decompressed = LZString.decompressFromBase64(compressed);
-                    const imported = JSON.parse(decompressed);
-                    if (imported.ElementID && imported.AllRules) {
-                        ElementID = imported.ElementID;
-                        AllRules = imported.AllRules;
-                        CanonicalPath = imported.CanonicalPath || {};
-                        currentId = imported.currentId || Math.max(...Object.values(ElementID)) + 1;
-                        
-                        initializeFSet();
-                        updateAndRenderTree();
-                        return;
-                    }
-                } catch (error) {
-                    console.error('加载本地数据失败:', error);
-                }
-            }
-            initializeData();
-        }
-        
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            // 显示加载提示
-            const originalText = importBtn.innerHTML;
-            importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 导入中...';
-            importBtn.disabled = true;
-            
-            const reader = new FileReader();
-            reader.onload = e => {
-                setTimeout(() => {
-                    try {
-                        const decompressed = LZString.decompressFromBase64(e.target.result);
-                        const imported = JSON.parse(decompressed);
-                        if (!imported.ElementID || !imported.AllRules) throw new Error('导入数据格式不正确');
-                        
-                        ElementID = imported.ElementID;
-                        AllRules = imported.AllRules;
-                        CanonicalPath = imported.CanonicalPath || {};
-                        currentId = imported.currentId || Math.max(...Object.values(ElementID)) + 1;
-                        
-                        initializeFSet();
-                        updateAndRenderTree();
-                        saveToLocalStorage();
-                        
-                        // 恢复按钮状态
-                        importBtn.innerHTML = originalText;
-                        importBtn.disabled = false;
-                        
-                        // 默认全部折叠
-                        setTimeout(() => {
-                            toggleAllNodes(false);
-                        }, 100);
-                    } catch (error) {
-                        alert('导入失败: ' + error.message);
-                        importBtn.innerHTML = originalText;
-                        importBtn.disabled = false;
-                    } finally {
-                        event.target.value = '';
-                    }
-                }, 100);
-            };
-            reader.readAsText(file);
-        }
 
-        document.addEventListener('DOMContentLoaded', init);
+        const app = new VisualizationApp();
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            app.setupIcicleZoom();
+            app.loadInitialData();
+            
+            document.getElementById('json_file_input').addEventListener('change', () => {
+                if (document.getElementById('json_file_input').files.length > 0) {
+                    app.logMessage('文件已选择，请点击 "导入 JSON 数据"。', false);
+                } else if (!app.hasData) {
+                    app.logMessage('请导入 JSON 数据。', false);
+                }
+            });
+        });
     </script>
 </body>
 </html>
