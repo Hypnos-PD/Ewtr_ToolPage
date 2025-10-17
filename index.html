@@ -185,6 +185,7 @@
             transform-origin: 0 0; 
             transition: transform 0.1s ease-out; 
             min-width: 100%; 
+            position: relative;
         }
         
         .icicle-root {
@@ -192,6 +193,8 @@
             display: flex;
             flex-direction: column;
             border-right: 1px solid rgba(0, 0, 0, 0.1);
+            position: absolute;
+            top: 0;
         }
 
         .icicle-node-container {
@@ -536,6 +539,12 @@
                     <input type="text" id="icicle_search_input" placeholder="输入元素名称实时搜索" oninput="app.debouncedRenderRectangularTree()" list="item_names_datalist">
                 </div>
                 
+                <label class="toggle-switch">
+                    <input type="checkbox" id="search_only_roots" onchange="app.debouncedRenderRectangularTree()">
+                    <span class="slider"></span>
+                    只搜索根节点
+                </label>
+                
                 <div class="filter-group">
                     <span>深度 (D):</span>
                     <input type="number" id="min_depth_filter_icicle" placeholder="Min D" oninput="app.debouncedRenderRectangularTree()">
@@ -662,6 +671,18 @@
                 
                 // 性能优化
                 this.renderScheduled = false;
+                this.virtualScrollEnabled = true;
+                this.visibleRoots = [];
+                this.allRoots = [];
+                this.virtualScrollOffset = 0;
+                this.visibleRange = { start: 0, end: 0 };
+                this.virtualScrollRafId = null;
+                
+                // 搜索状态
+                this.searchOnlyRoots = false;
+                
+                // 缓存
+                this.icicleCache = new Map();
             }
 
             // 防抖函数
@@ -708,7 +729,6 @@
                 }
             }
 
-
             loadInitialData() {
                 const storedData = localStorage.getItem('synthesis_data');
                 if (storedData) {
@@ -744,6 +764,7 @@
                 this.iciclePanX = 0;
                 this.iciclePanY = 0;
                 this._applyIcicleTransform();
+                this.icicleCache.clear();
             }
 
             importData() {
@@ -805,6 +826,9 @@
                     
                     // 移除加载指示器
                     statusEl.innerHTML = successMessage;
+                    
+                    // 清空缓存
+                    this.icicleCache.clear();
                 }, 10);
             }
 
@@ -864,7 +888,6 @@
                 datalist.innerHTML = determinedItems.map(item => `<option value="${item.name}">`).join('');
             }
 
-
             setupIcicleZoom() {
                 const wrapper = document.getElementById('rectangular_tree_container_wrapper');
                 
@@ -893,6 +916,12 @@
                     this.lastMouseY = e.clientY;
 
                     this._applyIcicleTransform();
+                    
+                    // 在拖动时更新虚拟滚动
+                    if (this.virtualScrollEnabled) {
+                        this.scheduleVirtualScrollUpdate();
+                    }
+                    
                     e.preventDefault();
                 });
 
@@ -928,6 +957,12 @@
                     this.lastMouseY = touch.clientY;
 
                     this._applyIcicleTransform();
+                    
+                    // 在拖动时更新虚拟滚动
+                    if (this.virtualScrollEnabled) {
+                        this.scheduleVirtualScrollUpdate();
+                    }
+                    
                     e.preventDefault();
                 }, { passive: false });
 
@@ -973,6 +1008,12 @@
                         this.iciclePanY = Math.min(0, this.iciclePanY);
                         
                         this._applyIcicleTransform();
+                        
+                        // 在缩放时更新虚拟滚动
+                        if (this.virtualScrollEnabled) {
+                            this.scheduleVirtualScrollUpdate();
+                        }
+                        
                         initialDistance = currentDistance;
                         e.preventDefault();
                     }
@@ -1011,12 +1052,27 @@
                     this.iciclePanY = Math.min(0, this.iciclePanY); 
 
                     this._applyIcicleTransform();
+                    
+                    // 在缩放时更新虚拟滚动
+                    if (this.virtualScrollEnabled) {
+                        this.scheduleVirtualScrollUpdate();
+                    }
                 }, { passive: false });
             }
             
             _applyIcicleTransform() {
                 const container = document.getElementById('rectangular_tree_container');
                 container.style.transform = `translate(${this.iciclePanX}px, ${this.iciclePanY}px) scale(${this.icicleZoomLevel})`;
+            }
+
+            // 安排虚拟滚动更新
+            scheduleVirtualScrollUpdate() {
+                if (this.virtualScrollRafId) {
+                    cancelAnimationFrame(this.virtualScrollRafId);
+                }
+                this.virtualScrollRafId = requestAnimationFrame(() => {
+                    this.updateVirtualScroll();
+                });
             }
 
             _getDepthColor(depth, isHighlight = false) {
@@ -1048,6 +1104,11 @@
             }
 
             getIcicleDecomposition(itemId) {
+                // 检查缓存
+                if (this.icicleCache.has(itemId)) {
+                    return this.icicleCache.get(itemId);
+                }
+
                 const item = this.getItemById(itemId);
                 if (!item || !item.isDetermined) return null;
 
@@ -1059,13 +1120,19 @@
                     children: []
                 };
 
-                if (item.depth === 0) return node;
+                if (item.depth === 0) {
+                    this.icicleCache.set(itemId, node);
+                    return node;
+                }
 
                 const simpleRecipes = (this.recipesByProduct.get(itemId) || [])
                     .filter(recipe => recipe.simple === true)
                     .filter(recipe => this.getItemById(recipe.sourceA)?.isDetermined && this.getItemById(recipe.sourceB)?.isDetermined);
 
-                if (simpleRecipes.length === 0) return node;
+                if (simpleRecipes.length === 0) {
+                    this.icicleCache.set(itemId, node);
+                    return node;
+                }
                 
                 const recipe = simpleRecipes[0];
                 
@@ -1085,6 +1152,8 @@
                      node.width = 1;
                 }
                 
+                // 存入缓存
+                this.icicleCache.set(itemId, node);
                 return node;
             }
 
@@ -1100,6 +1169,7 @@
                     const container = document.getElementById('rectangular_tree_container');
                     const wrapper = document.getElementById('rectangular_tree_container_wrapper');
                     const searchName = document.getElementById('icicle_search_input').value.trim().toLowerCase();
+                    const searchOnlyRoots = document.getElementById('search_only_roots').checked;
                     
                     const minDepth = parseInt(document.getElementById('min_depth_filter_icicle').value) || 0;
                     const maxDepth = parseInt(document.getElementById('max_depth_filter_icicle').value) || this.icicleMaxDepth + 1;
@@ -1126,15 +1196,23 @@
 
                     const trees = icicleRoots.map(rootItem => this.getIcicleDecomposition(rootItem.id)).filter(t => t);
                     
+                    // 应用搜索筛选
                     const filteredTrees = trees.filter(tree => {
                         if (!searchName) return true;
-                        let found = false;
-                        const checkNode = (node) => {
-                            if (node.name.toLowerCase().includes(searchName)) { found = true; return; }
-                            node.children.forEach(checkNode);
-                        };
-                        checkNode(tree);
-                        return found;
+                        
+                        if (searchOnlyRoots) {
+                            // 只搜索根节点
+                            return tree.name.toLowerCase().includes(searchName);
+                        } else {
+                            // 搜索所有节点
+                            let found = false;
+                            const checkNode = (node) => {
+                                if (node.name.toLowerCase().includes(searchName)) { found = true; return; }
+                                node.children.forEach(checkNode);
+                            };
+                            checkNode(tree);
+                            return found;
+                        }
                     });
                     
                     if (filteredTrees.length === 0) {
@@ -1144,45 +1222,182 @@
                         return;
                     }
 
-                    const totalIcicleWidthUnits = filteredTrees.reduce((sum, tree) => sum + tree.width, 0);
-                    const totalChartWidth = totalIcicleWidthUnits * (this.ICICLE_BASE_UNIT_WIDTH) + filteredTrees.length * 2 * this.ICICLE_NODE_MARGIN; 
+                    // 性能优化：当没有搜索/筛选时，使用虚拟滚动
+                    const hasSearchOrFilter = searchName || 
+                        minDepth !== 0 || maxDepth !== (this.icicleMaxDepth + 1) ||
+                        minWidth !== 0 || maxWidth !== 10000;
                     
-                    container.style.width = `${totalChartWidth}px`; 
+                    this.virtualScrollEnabled = !hasSearchOrFilter && filteredTrees.length > 50;
                     
-                    let targetNodeX = -1; 
-                    let accumulatedWidth = 0; 
-                    
-                    filteredTrees.forEach(tree => {
-                        const rootPixelWidth = tree.width * this.ICICLE_BASE_UNIT_WIDTH + 2 * this.ICICLE_NODE_MARGIN;
-                        
-                        const rootDiv = document.createElement('div');
-                        rootDiv.className = 'icicle-root';
-                        rootDiv.style.width = `${rootPixelWidth}px`; 
-
-                        const rootHtml = this._renderIcicleNode(tree, tree.width, searchName, accumulatedWidth, (foundX) => {
-                            if (targetNodeX === -1) targetNodeX = foundX;
-                        });
-                        rootDiv.innerHTML = rootHtml.html;
-                        container.appendChild(rootDiv);
-                        
-                        accumulatedWidth += rootPixelWidth;
-                    });
-                    
-                    if (targetNodeX !== -1) {
-                        const wrapperRect = wrapper.getBoundingClientRect();
-                        const wrapperCenterX = wrapperRect.width / 2;
-                        
-                        this.iciclePanX = (wrapperCenterX / this.icicleZoomLevel) - targetNodeX;
-                        this.iciclePanY = 0; 
-
-                        this._applyIcicleTransform();
-                        this.logMessage(`冰柱图搜索定位到 "${searchName}" 结果。`, false);
+                    if (this.virtualScrollEnabled) {
+                        this.allRoots = filteredTrees;
+                        this.renderVirtualScroll();
                     } else {
-                        this.logMessage(`冰柱图渲染完成，显示 ${filteredTrees.length} 个根元素。`, false);
+                        this.renderAllRoots(filteredTrees, searchName);
                     }
                     
                     this.renderScheduled = false;
                 });
+            }
+
+            // 渲染所有根节点（无虚拟滚动）
+            renderAllRoots(filteredTrees, searchName) {
+                const container = document.getElementById('rectangular_tree_container');
+                const wrapper = document.getElementById('rectangular_tree_container_wrapper');
+                
+                // 重置容器样式
+                container.style.position = 'static';
+                container.style.display = 'flex';
+                container.style.flexDirection = 'row';
+                
+                const totalIcicleWidthUnits = filteredTrees.reduce((sum, tree) => sum + tree.width, 0);
+                const totalChartWidth = totalIcicleWidthUnits * (this.ICICLE_BASE_UNIT_WIDTH) + filteredTrees.length * 2 * this.ICICLE_NODE_MARGIN; 
+                
+                container.style.width = `${totalChartWidth}px`; 
+                
+                let targetNodeX = -1; 
+                let accumulatedWidth = 0; 
+                
+                // 使用文档片段优化DOM操作
+                const fragment = document.createDocumentFragment();
+                
+                filteredTrees.forEach(tree => {
+                    const rootPixelWidth = tree.width * this.ICICLE_BASE_UNIT_WIDTH + 2 * this.ICICLE_NODE_MARGIN;
+                    
+                    const rootDiv = document.createElement('div');
+                    rootDiv.className = 'icicle-root';
+                    rootDiv.style.position = 'relative'; // 使用相对定位
+                    rootDiv.style.width = `${rootPixelWidth}px`; 
+
+                    const rootHtml = this._renderIcicleNode(tree, tree.width, searchName, accumulatedWidth, (foundX) => {
+                        if (targetNodeX === -1) targetNodeX = foundX;
+                    });
+                    rootDiv.innerHTML = rootHtml.html;
+                    fragment.appendChild(rootDiv);
+                    
+                    accumulatedWidth += rootPixelWidth;
+                });
+                
+                container.appendChild(fragment);
+                
+                if (targetNodeX !== -1) {
+                    const wrapperRect = wrapper.getBoundingClientRect();
+                    const wrapperCenterX = wrapperRect.width / 2;
+                    
+                    this.iciclePanX = (wrapperCenterX / this.icicleZoomLevel) - targetNodeX;
+                    this.iciclePanY = 0; 
+
+                    this._applyIcicleTransform();
+                    this.logMessage(`冰柱图搜索定位到 "${searchName}" 结果。`, false);
+                } else {
+                    this.logMessage(`冰柱图渲染完成，显示 ${filteredTrees.length} 个根元素。`, false);
+                }
+            }
+
+            // 虚拟滚动实现
+            renderVirtualScroll() {
+                const container = document.getElementById('rectangular_tree_container');
+                const wrapper = document.getElementById('rectangular_tree_container_wrapper');
+                
+                // 设置容器样式
+                container.style.position = 'relative';
+                container.style.display = 'block';
+                
+                // 计算虚拟滚动参数
+                const totalWidth = this.allRoots.reduce((sum, tree) => sum + tree.width, 0) * this.ICICLE_BASE_UNIT_WIDTH;
+                container.style.width = `${totalWidth}px`;
+                
+                // 初始渲染可见区域
+                this.updateVirtualScroll();
+                
+                this.logMessage(`冰柱图使用虚拟滚动，显示 ${this.allRoots.length} 个根元素。`, false);
+            }
+
+            updateVirtualScroll() {
+                const container = document.getElementById('rectangular_tree_container');
+                const wrapper = document.getElementById('rectangular_tree_container_wrapper');
+                
+                if (!this.virtualScrollEnabled || !this.allRoots.length) return;
+                
+                // 计算可见区域（考虑缩放和平移）
+                const viewportWidth = wrapper.clientWidth;
+                const viewportHeight = wrapper.clientHeight;
+                
+                // 计算在原始坐标系中的可见区域
+                const visibleStartX = -this.iciclePanX / this.icicleZoomLevel;
+                const visibleEndX = (-this.iciclePanX + viewportWidth) / this.icicleZoomLevel;
+                
+                // 添加缓冲区（扩大可见区域范围，防止拖动时出现空白）
+                const buffer = viewportWidth / this.icicleZoomLevel * 0.5;
+                const visibleStartWithBuffer = Math.max(0, visibleStartX - buffer);
+                const visibleEndWithBuffer = visibleEndX + buffer;
+                
+                // 计算哪些根节点在可见区域内
+                let accumulatedWidth = 0;
+                const visibleRoots = [];
+                
+                for (let i = 0; i < this.allRoots.length; i++) {
+                    const tree = this.allRoots[i];
+                    const rootWidth = tree.width * this.ICICLE_BASE_UNIT_WIDTH;
+                    
+                    // 检查根节点是否在可见区域内
+                    if (accumulatedWidth + rootWidth >= visibleStartWithBuffer && accumulatedWidth <= visibleEndWithBuffer) {
+                        visibleRoots.push({
+                            tree,
+                            startX: accumulatedWidth,
+                            index: i
+                        });
+                    }
+                    
+                    accumulatedWidth += rootWidth;
+                    // 如果已经超过可见区域，可以提前结束
+                    if (accumulatedWidth > visibleEndWithBuffer) break;
+                }
+                
+                // 更新DOM
+                this.renderVisibleRoots(visibleRoots);
+            }
+
+            renderVisibleRoots(visibleRoots) {
+                const container = document.getElementById('rectangular_tree_container');
+                
+                // 创建文档片段，减少DOM操作
+                const fragment = document.createDocumentFragment();
+                
+                // 先隐藏所有现有根节点
+                const existingRoots = container.querySelectorAll('.icicle-root');
+                existingRoots.forEach(root => {
+                    root.style.display = 'none';
+                });
+                
+                // 渲染或更新可见的根节点
+                visibleRoots.forEach(({tree, startX, index}) => {
+                    const rootPixelWidth = tree.width * this.ICICLE_BASE_UNIT_WIDTH;
+                    
+                    // 检查是否已经存在这个根节点
+                    let rootDiv = container.querySelector(`.icicle-root[data-index="${index}"]`);
+                    
+                    if (!rootDiv) {
+                        // 创建新的根节点
+                        rootDiv = document.createElement('div');
+                        rootDiv.className = 'icicle-root';
+                        rootDiv.setAttribute('data-index', index);
+                        rootDiv.style.width = `${rootPixelWidth}px`;
+                        rootDiv.style.left = `${startX}px`;
+                        
+                        const rootHtml = this._renderIcicleNode(tree, tree.width, '', startX);
+                        rootDiv.innerHTML = rootHtml.html;
+                        
+                        fragment.appendChild(rootDiv);
+                    } else {
+                        // 更新现有根节点的位置
+                        rootDiv.style.left = `${startX}px`;
+                        rootDiv.style.display = 'block';
+                    }
+                });
+                
+                // 一次性更新DOM
+                container.appendChild(fragment);
             }
 
             _renderIcicleNode(node, parentWidthUnits, searchName, currentX, setTargetXCallback) {
@@ -1227,7 +1442,7 @@
                 return { html: html, width: nodePixelWidth };
             }
 
-
+            // 其他方法保持不变...
             initialRenderDAG() {
                 if (!this.hasData) return;
                 const searchName = document.getElementById('dag_search_input').value.trim();
@@ -1286,7 +1501,6 @@
                     color: { border: newBorderColor } 
                 });
             }
-
 
             _updateGraphFromExpandedSet() {
                 if (!this.dagNodes || !this.dagEdges || !this.network) return;
@@ -1380,7 +1594,6 @@
                     };
                 });
 
-
                 this.dagNodes.remove(nodesToRemove);
                 this.dagNodes.update(nodesToUpdate);
                 this._addNodesToGraph(nodesToAdd); 
@@ -1459,7 +1672,6 @@
                 });
                 this.dagNodes.add(nodesToAdd);
             }
-
 
             renderNetwork() {
                 const container = document.getElementById('dag_graph_container');
