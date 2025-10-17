@@ -7,96 +7,138 @@
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
         :root {
-            --primary-color: #3f51b5;
-            --secondary-color: #4caf50;
-            --accent-color: #ff9800;
-            --text-color: #333;
-            --bg-color: #eef1f6;
+            --primary-color: #4361ee;
+            --secondary-color: #3a86ff;
+            --accent-color: #ff6b6b;
+            --success-color: #06d6a0;
+            --text-color: #2b2d42;
+            --light-text: #8d99ae;
+            --bg-color: #f8f9fa;
             --card-bg: white;
-            --border-radius: 12px;
+            --border-radius: 16px;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
         }
 
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body { 
-            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            padding: 10px; 
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            padding: 20px; 
             background-color: var(--bg-color); 
-            margin: 0;
             color: var(--text-color);
             overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
+            line-height: 1.6;
         }
         
         .container { 
             max-width: 1400px; 
             margin: auto; 
             background: var(--card-bg); 
-            padding: 20px; 
+            padding: 30px; 
             border-radius: var(--border-radius); 
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); 
+            box-shadow: var(--shadow); 
         }
 
         h1 { 
             color: var(--primary-color); 
             border-bottom: 3px solid var(--primary-color); 
-            padding-bottom: 8px; 
-            margin-bottom: 15px; 
-            font-weight: 400; 
-            font-size: 1.6rem;
+            padding-bottom: 12px; 
+            margin-bottom: 25px; 
+            font-weight: 600; 
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+        
+        h1:before {
+            content: "📊";
+            font-size: 1.5rem;
+        }
+        
         h2 { 
             color: var(--text-color); 
-            margin-top: 20px; 
+            margin-top: 25px; 
             border-left: 5px solid var(--accent-color); 
-            padding-left: 12px; 
-            font-weight: 500; 
-            font-size: 1.3rem;
+            padding-left: 15px; 
+            font-weight: 600; 
+            font-size: 1.4rem;
+            margin-bottom: 15px;
         }
         
         .chart-container { 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
+            border: 1px solid #e9ecef; 
+            border-radius: 12px; 
             margin-top: 15px;
             background: #fafafa;
             overflow: hidden; 
             position: relative;
+            transition: var(--transition);
+        }
+        
+        .chart-container:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
         }
         
         .controls { 
-            margin-bottom: 15px; 
+            margin-bottom: 20px; 
             display: flex; 
             align-items: center; 
             flex-wrap: wrap; 
-            gap: 8px; 
-            padding: 8px 0; 
+            gap: 12px; 
+            padding: 12px 0; 
         }
+        
         .controls input[type="file"], 
         .controls button, 
         .controls input[type="text"], 
         .controls input[type="number"] { 
-            padding: 10px 12px; 
-            border-radius: 6px; 
-            border: 1px solid #ccc; 
+            padding: 12px 16px; 
+            border-radius: 8px; 
+            border: 1px solid #e1e5e9; 
             font-size: 14px; 
-            transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            min-height: 44px; /* 提高触摸区域 */
+            transition: var(--transition);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+            min-height: 44px;
+            background: white;
         }
+        
+        .controls input[type="text"], 
+        .controls input[type="number"] {
+            width: 100%;
+        }
+        
         .controls button { 
-            background-color: var(--secondary-color); 
+            background-color: var(--primary-color); 
             color: white; 
             cursor: pointer; 
             border: none;
-            width: auto !important; 
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
         }
+        
         .controls button:hover, 
         .controls button:active { 
-            background-color: #388e3c; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
+            background-color: var(--secondary-color); 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+            transform: translateY(-2px);
+        }
+        
+        .controls button.import-btn {
+            background-color: var(--success-color);
+        }
+        
+        .controls button.clear-btn {
+            background-color: var(--accent-color);
         }
         
         .tab-content { display: none; }
@@ -108,57 +150,69 @@
             white-space: nowrap;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 5px;
         }
+        
         .tabs::-webkit-scrollbar {
             display: none;
         }
+        
         .tabs button {
-            padding: 12px 16px;
+            padding: 12px 20px;
             border: none;
             cursor: pointer;
-            background-color: #e0e0e0;
-            border-bottom: 3px solid transparent;
-            border-radius: 8px 8px 0 0;
+            background-color: transparent;
+            border-radius: 8px;
             font-weight: 500;
             flex-shrink: 0;
             margin-right: 5px;
-            transition: all 0.2s;
+            transition: var(--transition);
+            color: var(--light-text);
         }
+        
         .tabs button.active {
             background-color: white;
-            border-bottom: 3px solid var(--primary-color);
-            font-weight: bold;
             color: var(--primary-color);
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
         
         #status_message { 
-            color: #e53935; 
-            font-weight: bold; 
+            color: var(--success-color); 
+            font-weight: 500; 
             margin-left: 10px; 
             word-break: break-word;
             flex: 1;
             min-width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         #log_area {
             min-height: 20px; 
-            padding: 10px; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            margin-bottom: 15px; 
+            padding: 15px; 
+            border: 1px solid #e9ecef; 
+            border-radius: 10px; 
+            margin-bottom: 20px; 
             background: #fdfdff; 
             font-size: 13px; 
-            color: #555; 
+            color: var(--light-text); 
             overflow-y: auto; 
-            max-height: 100px;
+            max-height: 120px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
         }
+        
         #log_area p {
              margin: 0;
-             padding: 2px 0;
+             padding: 5px 0;
              border-bottom: 1px dashed #eee;
         }
+        
         #log_area p:last-child {
              border-bottom: none;
         }
@@ -192,7 +246,7 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
             position: absolute;
             top: 0;
         }
@@ -218,11 +272,16 @@
             cursor: pointer;
             width: 100%; 
             margin: 0; 
-            padding: 0 5px;
-            border-radius: 2px; 
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 0 5px rgba(255, 255, 255, 0.4);
-            transition: background-color 0.3s, box-shadow 0.3s;
-            border: 1px solid rgba(255, 255, 255, 0.5); 
+            padding: 0 8px;
+            border-radius: 4px; 
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 0 8px rgba(255, 255, 255, 0.3);
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+        }
+        
+        .icicle-node-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), inset 0 0 8px rgba(255, 255, 255, 0.3);
         }
 
         .icicle-children-container {
@@ -236,12 +295,42 @@
             height: 500px; 
             position: relative;
         }
+        
+        .chart-wrapper {
+            position: relative;
+        }
+        
+        .fullscreen-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 8px 16px;
+            cursor: pointer;
+            z-index: 100;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .fullscreen-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
 
         .toggle-switch {
             display: flex;
             align-items: center;
             font-size: 14px;
-            color: #555;
+            color: var(--text-color);
             cursor: pointer;
             user-select: none;
             white-space: nowrap; 
@@ -255,13 +344,13 @@
         .slider {
             width: 45px;
             height: 24px;
-            background-color: #ccc;
+            background-color: #e1e5e9;
             border-radius: 12px;
             position: relative;
             margin-left: 10px;
             margin-right: 8px;
-            transition: background-color 0.4s;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .slider:before {
@@ -273,7 +362,7 @@
             background-color: white;
             top: 3px;
             left: 3px;
-            transition: transform 0.4s;
+            transition: var(--transition);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
@@ -285,53 +374,54 @@
             transform: translateX(21px);
         }
 
-        /* 全屏按钮 */
-        .fullscreen-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 12px;
-            cursor: pointer;
-            z-index: 100;
-            font-size: 14px;
+        .filter-group {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        
+        .filter-group span {
+            color: var(--light-text);
+            font-size: 14px;
+        }
+        
+        .search-container {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            width: 100%;
         }
 
-        .fullscreen-btn:hover {
-            background: rgba(0, 0, 0, 0.9);
-        }
-
-        /* 移动端适配 */
         @media (max-width: 768px) {
             body {
-                padding: 8px;
+                padding: 10px;
             }
             
             .container {
-                padding: 15px;
-                border-radius: 10px;
+                padding: 20px;
+                border-radius: 12px;
             }
             
             h1 {
-                font-size: 1.4rem;
-                padding-bottom: 6px;
+                font-size: 1.5rem;
+                padding-bottom: 8px;
             }
             
             h2 {
-                font-size: 1.2rem;
-                margin-top: 15px;
-                padding-left: 10px;
+                font-size: 1.3rem;
+                margin-top: 20px;
+                padding-left: 12px;
             }
             
             .controls {
-                gap: 8px;
-                padding: 8px 0;
+                gap: 10px;
+                padding: 10px 0;
                 flex-direction: column;
                 align-items: stretch;
             }
@@ -345,21 +435,21 @@
             .controls button,
             .controls input[type="text"],
             .controls input[type="number"] {
-                padding: 12px;
-                font-size: 16px; /* 防止iOS自动缩放 */
+                padding: 14px;
+                font-size: 16px;
                 width: 100% !important;
             }
             
             .controls button {
-                padding: 12px 16px;
+                padding: 14px 18px;
             }
             
             .tabs {
-                margin-bottom: 10px;
+                margin-bottom: 15px;
             }
             
             .tabs button {
-                padding: 10px 14px;
+                padding: 10px 16px;
                 font-size: 14px;
             }
             
@@ -367,7 +457,7 @@
                 margin-left: 0;
                 margin-top: 10px;
                 text-align: center;
-                order: 10; /* 放在最后 */
+                order: 10;
             }
             
             #rectangular_tree_container_wrapper,
@@ -388,56 +478,50 @@
             }
             
             #log_area {
-                max-height: 80px;
+                max-height: 100px;
                 font-size: 12px;
             }
             
-            /* 调整输入框组布局 */
             .filter-group {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 5px;
-                align-items: center;
                 width: 100%;
+                justify-content: space-between;
             }
             
             .filter-group span {
-                display: inline-block;
                 width: 60px;
-                text-align: left;
-                margin-right: 5px;
             }
             
             .filter-group input[type="number"] {
                 width: calc(50% - 35px) !important;
-                display: inline-block;
             }
             
-            .controls input[type="text"] {
-                width: 100% !important;
-            }
-            
-            /* 优化搜索框布局 */
             .search-container {
                 width: 100%;
             }
             
-            .search-container input {
-                width: 100% !important;
+            .input-group {
+                gap: 8px;
+            }
+            
+            .fullscreen-btn {
+                top: 10px;
+                right: 10px;
+                padding: 6px 12px;
+                font-size: 12px;
             }
         }
 
         @media (max-width: 480px) {
             .container {
-                padding: 10px;
+                padding: 15px;
             }
             
             h1 {
-                font-size: 1.3rem;
+                font-size: 1.4rem;
             }
             
             h2 {
-                font-size: 1.1rem;
+                font-size: 1.2rem;
             }
             
             #rectangular_tree_container_wrapper,
@@ -446,9 +530,9 @@
             }
             
             .icicle-node-label {
-                font-size: 9px;
-                height: 25px;
-                line-height: 25px;
+                font-size: 10px;
+                height: 28px;
+                line-height: 28px;
             }
             
             .toggle-switch {
@@ -456,11 +540,10 @@
             }
             
             .controls {
-                gap: 5px;
+                gap: 8px;
             }
         }
 
-        /* 防止移动端输入框缩放 */
         @media (max-width: 768px) {
             input[type="text"],
             input[type="number"] {
@@ -468,7 +551,6 @@
             }
         }
 
-        /* 全屏样式 */
         .fullscreen {
             position: fixed !important;
             top: 0 !important;
@@ -477,28 +559,25 @@
             height: 100% !important;
             z-index: 9999;
             background: white;
-            padding: 10px;
+            padding: 15px;
         }
 
         .fullscreen .chart-container {
             height: calc(100% - 60px) !important;
         }
 
-        /* 优化性能的样式 */
         .icicle-node-label {
             will-change: transform;
         }
 
-        /* 加载指示器 */
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,.3);
             border-radius: 50%;
             border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
         }
 
         @keyframes spin {
@@ -506,25 +585,84 @@
         }
 
         .vis-network {
-            /* 优化网络图性能 */
             transform: translateZ(0);
+        }
+        
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: var(--shadow);
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--light-text);
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>合成数据可视化</h1>
-
-        <div class="controls">
-            <input type="file" id="json_file_input" accept="application/json">
-            <button onclick="app.importData()">导入 JSON 数据</button>
-            <button onclick="app.clearStorageData()">清除存储数据</button>
-            <span id="status_message">准备就绪。</span>
-        </div>
+        <h1>合成数据可视化分析平台</h1>
         
-        <div id="log_area">
-            <p style="margin: 0; padding: 0;">日志/状态信息:</p>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="total-items">0</div>
+                <div class="stat-label">总元素数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="total-recipes">0</div>
+                <div class="stat-label">合成配方数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="max-depth">0</div>
+                <div class="stat-label">最大深度</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="controls">
+                <input type="file" id="json_file_input" accept="application/json">
+                <button class="import-btn" onclick="app.importData()">
+                    <span>📁</span> 导入 JSON 数据
+                </button>
+                <button class="clear-btn" onclick="app.clearStorageData()">
+                    <span>🗑️</span> 清除存储数据
+                </button>
+                <span id="status_message">
+                    <span>✅</span> 准备就绪。
+                </span>
+            </div>
+            
+            <div id="log_area">
+                <p>日志/状态信息:</p>
+            </div>
         </div>
 
         <div class="tabs">
@@ -533,85 +671,104 @@
         </div>
 
         <div id="tab1" class="tab-content active">
-            <h2>矩形冰柱图</h2>
-            <div class="controls">
-                <div class="search-container">
-                    <input type="text" id="icicle_search_input" placeholder="输入元素名称实时搜索" oninput="app.debouncedRenderRectangularTree()" list="item_names_datalist">
+            <h2>矩形冰柱图分析</h2>
+            <p class="description">可视化元素的层级结构和合成路径，支持交互式探索。</p>
+            
+            <div class="card">
+                <div class="controls">
+                    <div class="input-group">
+                        <div class="search-container">
+                            <input type="text" id="icicle_search_input" placeholder="输入元素名称实时搜索" oninput="app.debouncedRenderRectangularTree()" list="item_names_datalist">
+                        </div>
+                        
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="search_only_roots" checked onchange="app.debouncedRenderRectangularTree()">
+                            <span class="slider"></span>
+                            只搜索根节点
+                        </label>
+                        
+                        <div class="filter-group">
+                            <span>深度:</span>
+                            <input type="number" id="min_depth_filter_icicle" placeholder="最小" oninput="app.debouncedRenderRectangularTree()">
+                            <input type="number" id="max_depth_filter_icicle" placeholder="最大" oninput="app.debouncedRenderRectangularTree()">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <span>宽度:</span>
+                            <input type="number" id="min_width_filter_icicle" placeholder="最小" oninput="app.debouncedRenderRectangularTree()">
+                            <input type="number" id="max_width_filter_icicle" placeholder="最大" oninput="app.debouncedRenderRectangularTree()">
+                        </div>
+                    </div>
                 </div>
                 
-                <label class="toggle-switch">
-                    <input type="checkbox" id="search_only_roots" onchange="app.debouncedRenderRectangularTree()">
-                    <span class="slider"></span>
-                    只搜索根节点
-                </label>
-                
-                <div class="filter-group">
-                    <span>深度 (D):</span>
-                    <input type="number" id="min_depth_filter_icicle" placeholder="Min D" oninput="app.debouncedRenderRectangularTree()">
-                    <input type="number" id="max_depth_filter_icicle" placeholder="Max D" oninput="app.debouncedRenderRectangularTree()">
+                <div class="chart-wrapper">
+                    <div id="rectangular_tree_container_wrapper" class="chart-container">
+                         <div id="rectangular_tree_container" style="transform: translate(0px, 0px) scale(1);">
+                            <p style="padding: 20px; text-align: center; color: var(--light-text);">请导入数据并等待图表渲染。</p>
+                         </div>
+                    </div>
+                    <button class="fullscreen-btn" onclick="app.toggleFullscreen('rectangular_tree_container_wrapper')">
+                        <span>⛶</span> 全屏
+                    </button>
                 </div>
-                
-                <div class="filter-group">
-                    <span>宽度 (W):</span>
-                    <input type="number" id="min_width_filter_icicle" placeholder="Min W" oninput="app.debouncedRenderRectangularTree()">
-                    <input type="number" id="max_width_filter_icicle" placeholder="Max W" oninput="app.debouncedRenderRectangularTree()">
-                </div>
-            </div>
-            <div id="rectangular_tree_container_wrapper" class="chart-container">
-                 <button class="fullscreen-btn" onclick="app.toggleFullscreen('rectangular_tree_container_wrapper')">
-                    <span>全屏</span>
-                 </button>
-                 <div id="rectangular_tree_container" style="transform: translate(0px, 0px) scale(1);">
-                    <p style="padding: 20px;">请导入数据并等待图表渲染。</p>
-                 </div>
             </div>
         </div>
 
         <div id="tab2" class="tab-content">
-            <h2>有向无环图</h2>
-            <p>点击节点展开/收起其邻居。</p>
-            <div class="controls">
-                <div class="search-container">
-                    <input type="text" id="dag_search_input" placeholder="输入要搜索的元素名称" list="item_names_datalist" oninput="app.debouncedInitialRenderDAG()">
-                </div>
-                
-                <label class="toggle-switch">
-                    <input type="checkbox" id="non_simple_toggle" onchange="app.debouncedUpdateGraph()">
-                    <span class="slider"></span>
-                    显示非最简路径
-                </label>
-                
-                <label class="toggle-switch">
-                    <input type="checkbox" id="expand_only_parents" checked onchange="app.debouncedUpdateGraph()">
-                    <span class="slider"></span>
-                    展开素材
-                </label>
+            <h2>有向无环图分析</h2>
+            <p class="description">探索元素之间的合成关系，点击节点展开/收起其邻居。</p>
+            
+            <div class="card">
+                <div class="controls">
+                    <div class="input-group">
+                        <div class="search-container">
+                            <input type="text" id="dag_search_input" placeholder="输入要搜索的元素名称" list="item_names_datalist" oninput="app.debouncedInitialRenderDAG()">
+                        </div>
+                        
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="non_simple_toggle" onchange="app.debouncedUpdateGraph()">
+                            <span class="slider"></span>
+                            显示非最简路径
+                        </label>
+                        
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="expand_only_parents" checked onchange="app.debouncedUpdateGraph()">
+                            <span class="slider"></span>
+                            展开素材
+                        </label>
 
-                <label class="toggle-switch">
-                    <input type="checkbox" id="expand_children_and_peers" onchange="app.debouncedUpdateGraph()">
-                    <span class="slider"></span>
-                    展开产物
-                </label>
-            </div>
-            <div class="controls">
-                <div class="filter-group">
-                    <span>深度 (D):</span>
-                    <input type="number" id="min_depth_filter" placeholder="Min D" oninput="app.debouncedUpdateGraph()">
-                    <input type="number" id="max_depth_filter" placeholder="Max D" oninput="app.debouncedUpdateGraph()">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="expand_children_and_peers" onchange="app.debouncedUpdateGraph()">
+                            <span class="slider"></span>
+                            展开产物
+                        </label>
+                    </div>
                 </div>
                 
-                <div class="filter-group">
-                    <span>宽度 (W):</span>
-                    <input type="number" id="min_width_filter" placeholder="Min W" oninput="app.debouncedUpdateGraph()">
-                    <input type="number" id="max_width_filter" placeholder="Max W" oninput="app.debouncedUpdateGraph()">
+                <div class="controls">
+                    <div class="input-group">
+                        <div class="filter-group">
+                            <span>深度:</span>
+                            <input type="number" id="min_depth_filter" placeholder="最小" oninput="app.debouncedUpdateGraph()">
+                            <input type="number" id="max_depth_filter" placeholder="最大" oninput="app.debouncedUpdateGraph()">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <span>宽度:</span>
+                            <input type="number" id="min_width_filter" placeholder="最小" oninput="app.debouncedUpdateGraph()">
+                            <input type="number" id="max_width_filter" placeholder="最大" oninput="app.debouncedUpdateGraph()">
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div id="dag_graph_container" class="chart-container">
-                <button class="fullscreen-btn" onclick="app.toggleFullscreen('dag_graph_container')">
-                    <span>全屏</span>
-                </button>
-                 <p style="padding: 20px;">请在上方输入框中输入元素名称进行搜索。</p>
+                <div class="chart-wrapper">
+                    <div id="dag_graph_container" class="chart-container">
+                         <p style="padding: 20px; text-align: center; color: var(--light-text);">请在上方输入框中输入元素名称进行搜索。</p>
+                    </div>
+                    <button class="fullscreen-btn" onclick="app.toggleFullscreen('dag_graph_container')">
+                        <span>⛶</span> 全屏
+                    </button>
+                </div>
             </div>
             <datalist id="item_names_datalist"></datalist>
         </div>
@@ -619,7 +776,6 @@
     </div>
 
     <script>
-        
         class Item {
             constructor(id, name, depth = -1, width = 1) {
                 this.id = id; this.name = name; this.depth = depth; this.width = width;
@@ -666,10 +822,8 @@
                 this.lastMouseX = 0;
                 this.lastMouseY = 0;
                 
-                // 防抖函数
                 this.debounceTimers = {};
                 
-                // 性能优化
                 this.renderScheduled = false;
                 this.virtualScrollEnabled = true;
                 this.visibleRoots = [];
@@ -678,14 +832,18 @@
                 this.visibleRange = { start: 0, end: 0 };
                 this.virtualScrollRafId = null;
                 
-                // 搜索状态
-                this.searchOnlyRoots = false;
+                this.searchOnlyRoots = true;
                 
-                // 缓存
                 this.icicleCache = new Map();
+                
+                this.icicleBounds = {
+                    minX: 0,
+                    maxX: 0,
+                    minY: 0,
+                    maxY: 0
+                };
             }
 
-            // 防抖函数
             debounce(func, wait, immediate) {
                 return function() {
                     const context = this;
@@ -701,7 +859,6 @@
                 }.bind(this);
             }
 
-            // 初始化防抖函数
             initDebounceFunctions() {
                 this.debouncedRenderRectangularTree = this.debounce(this.renderRectangularTree, 300);
                 this.debouncedInitialRenderDAG = this.debounce(this.initialRenderDAG, 300);
@@ -712,21 +869,36 @@
                 const logArea = document.getElementById('log_area');
                 const statusEl = document.getElementById('status_message');
                 
-                statusEl.textContent = message;
-                statusEl.style.color = isError ? '#e53935' : '#4caf50';
+                statusEl.innerHTML = isError ? 
+                    `<span style="color: var(--accent-color)">⚠️</span> ${message}` :
+                    `<span style="color: var(--success-color)">✅</span> ${message}`;
 
                 const now = new Date();
                 const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
                 
                 const logEntry = document.createElement('p');
-                logEntry.style.color = isError ? '#d32f2f' : '#555';
+                logEntry.style.color = isError ? 'var(--accent-color)' : 'var(--light-text)';
                 logEntry.innerHTML = `[${timeString}] ${message}`;
 
-                logArea.prepend(logEntry);
+                logArea.appendChild(logEntry);
 
                 while (logArea.children.length > 20) {
-                    logArea.removeChild(logArea.lastElementChild);
+                    logArea.removeChild(logArea.firstElementChild);
                 }
+                
+                logArea.scrollTop = logArea.scrollHeight;
+            }
+
+            updateStats() {
+                if (!this.hasData) return;
+                
+                const totalItems = Array.from(this.items.values()).filter(item => item.isDetermined).length;
+                const totalRecipes = this.recipes.size;
+                const maxDepth = this.icicleMaxDepth;
+                
+                document.getElementById('total-items').textContent = totalItems;
+                document.getElementById('total-recipes').textContent = totalRecipes;
+                document.getElementById('max-depth').textContent = maxDepth;
             }
 
             loadInitialData() {
@@ -738,7 +910,6 @@
                         return;
                     } catch (e) {
                         this.logMessage("加载本地数据失败。请导入新的 JSON 文件。", true);
-                        console.error("加载本地数据失败:", e);
                     }
                 }
                 this.logMessage('请导入 JSON 数据。', false);
@@ -750,7 +921,6 @@
                     this.logMessage("数据已自动保存到本地存储。", false);
                 } catch (e) {
                     this.logMessage("保存数据到本地存储失败。", true);
-                    console.error("保存数据到本地存储失败:", e);
                 }
             }
 
@@ -758,13 +928,17 @@
                 localStorage.removeItem('synthesis_data');
                 this.hasData = false;
                 this.logMessage('已清除本地存储的数据。请重新导入文件。', true);
-                document.getElementById('rectangular_tree_container').innerHTML = '<p style="padding: 20px;">请导入数据并等待图表渲染。</p>';
-                document.getElementById('dag_graph_container').innerHTML = '<p style="padding: 20px;">请在上方输入框中输入元素名称进行搜索。</p>';
+                document.getElementById('rectangular_tree_container').innerHTML = '<p style="padding: 20px; text-align: center; color: var(--light-text);">请导入数据并等待图表渲染。</p>';
+                document.getElementById('dag_graph_container').innerHTML = '<p style="padding: 20px; text-align: center; color: var(--light-text);">请在上方输入框中输入元素名称进行搜索。</p>';
                 this.icicleZoomLevel = 1.0;
                 this.iciclePanX = 0;
                 this.iciclePanY = 0;
                 this._applyIcicleTransform();
                 this.icicleCache.clear();
+                
+                document.getElementById('total-items').textContent = '0';
+                document.getElementById('total-recipes').textContent = '0';
+                document.getElementById('max-depth').textContent = '0';
             }
 
             importData() {
@@ -798,11 +972,9 @@
             }
 
             _processData(importedData, successMessage) {
-                // 显示加载指示器
                 const statusEl = document.getElementById('status_message');
                 statusEl.innerHTML = '<div class="loading"></div>处理数据中...';
                 
-                // 使用setTimeout让UI有机会更新
                 setTimeout(() => {
                     this.items = new Map();
                     this.recipes = new Map(importedData.recipes);
@@ -823,11 +995,10 @@
 
                     this.logMessage(successMessage, false);
                     this.initSelectorsAndGraphs();
+                    this.updateStats();
                     
-                    // 移除加载指示器
-                    statusEl.innerHTML = successMessage;
+                    statusEl.innerHTML = `<span style="color: var(--success-color)">✅</span> ${successMessage}`;
                     
-                    // 清空缓存
                     this.icicleCache.clear();
                 }, 10);
             }
@@ -891,7 +1062,6 @@
             setupIcicleZoom() {
                 const wrapper = document.getElementById('rectangular_tree_container_wrapper');
                 
-                // 鼠标事件
                 wrapper.addEventListener('mousedown', (e) => {
                     if (this.currentTab !== 1 || e.button !== 0) return; 
                     this.isDragging = true;
@@ -910,14 +1080,13 @@
                     this.iciclePanX += dx / this.icicleZoomLevel;
                     this.iciclePanY += dy / this.icicleZoomLevel;
 
-                    this.iciclePanY = Math.min(0, this.iciclePanY); 
-
+                    this._constrainIcicleTransform();
+                    
                     this.lastMouseX = e.clientX;
                     this.lastMouseY = e.clientY;
 
                     this._applyIcicleTransform();
                     
-                    // 在拖动时更新虚拟滚动
                     if (this.virtualScrollEnabled) {
                         this.scheduleVirtualScrollUpdate();
                     }
@@ -930,7 +1099,6 @@
                     wrapper.classList.remove('is-dragging');
                 });
 
-                // 触摸事件支持
                 wrapper.addEventListener('touchstart', (e) => {
                     if (this.currentTab !== 1 || e.touches.length !== 1) return;
                     this.isDragging = true;
@@ -951,14 +1119,13 @@
                     this.iciclePanX += dx / this.icicleZoomLevel;
                     this.iciclePanY += dy / this.icicleZoomLevel;
 
-                    this.iciclePanY = Math.min(0, this.iciclePanY); 
-
+                    this._constrainIcicleTransform();
+                    
                     this.lastMouseX = touch.clientX;
                     this.lastMouseY = touch.clientY;
 
                     this._applyIcicleTransform();
                     
-                    // 在拖动时更新虚拟滚动
                     if (this.virtualScrollEnabled) {
                         this.scheduleVirtualScrollUpdate();
                     }
@@ -971,7 +1138,6 @@
                     wrapper.classList.remove('is-dragging');
                 });
 
-                // 双指缩放
                 let initialDistance = null;
                 
                 wrapper.addEventListener('touchstart', (e) => {
@@ -995,7 +1161,6 @@
                         const oldZoom = this.icicleZoomLevel;
                         this.icicleZoomLevel = Math.max(0.2, Math.min(4.0, oldZoom * scaleFactor));
                         
-                        // 计算缩放中心
                         const rect = wrapper.getBoundingClientRect();
                         const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
                         const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
@@ -1005,11 +1170,11 @@
                         
                         this.iciclePanX = (centerX / this.icicleZoomLevel) - unscaledCenterX;
                         this.iciclePanY = (centerY / this.icicleZoomLevel) - unscaledCenterY;
-                        this.iciclePanY = Math.min(0, this.iciclePanY);
+                        
+                        this._constrainIcicleTransform();
                         
                         this._applyIcicleTransform();
                         
-                        // 在缩放时更新虚拟滚动
                         if (this.virtualScrollEnabled) {
                             this.scheduleVirtualScrollUpdate();
                         }
@@ -1025,7 +1190,6 @@
                     }
                 });
 
-                // 滚轮缩放
                 wrapper.addEventListener('wheel', (e) => {
                     if (!this.hasData || this.currentTab !== 1) return;
                     e.preventDefault(); 
@@ -1049,11 +1213,10 @@
                     this.iciclePanX = (mouseX / this.icicleZoomLevel) - unscaledMouseX;
                     this.iciclePanY = (mouseY / this.icicleZoomLevel) - unscaledMouseY;
                     
-                    this.iciclePanY = Math.min(0, this.iciclePanY); 
-
+                    this._constrainIcicleTransform();
+                    
                     this._applyIcicleTransform();
                     
-                    // 在缩放时更新虚拟滚动
                     if (this.virtualScrollEnabled) {
                         this.scheduleVirtualScrollUpdate();
                     }
@@ -1065,7 +1228,31 @@
                 container.style.transform = `translate(${this.iciclePanX}px, ${this.iciclePanY}px) scale(${this.icicleZoomLevel})`;
             }
 
-            // 安排虚拟滚动更新
+            _constrainIcicleTransform() {
+                const wrapper = document.getElementById('rectangular_tree_container_wrapper');
+                const container = document.getElementById('rectangular_tree_container');
+                
+                if (!wrapper || !container) return;
+                
+                const wrapperWidth = wrapper.clientWidth;
+                const wrapperHeight = wrapper.clientHeight;
+                
+                const containerWidth = container.offsetWidth * this.icicleZoomLevel;
+                const containerHeight = container.offsetHeight * this.icicleZoomLevel;
+                
+                const minX = Math.min(0, wrapperWidth - containerWidth);
+                const maxX = 0;
+                const minY = Math.min(0, wrapperHeight - containerHeight);
+                const maxY = 0;
+                
+                this.iciclePanX = Math.max(minX, Math.min(maxX, this.iciclePanX));
+                this.iciclePanY = Math.max(minY, Math.min(maxY, this.iciclePanY));
+                
+                this.icicleBounds = {
+                    minX, maxX, minY, maxY
+                };
+            }
+
             scheduleVirtualScrollUpdate() {
                 if (this.virtualScrollRafId) {
                     cancelAnimationFrame(this.virtualScrollRafId);
@@ -1104,7 +1291,6 @@
             }
 
             getIcicleDecomposition(itemId) {
-                // 检查缓存
                 if (this.icicleCache.has(itemId)) {
                     return this.icicleCache.get(itemId);
                 }
@@ -1152,7 +1338,6 @@
                      node.width = 1;
                 }
                 
-                // 存入缓存
                 this.icicleCache.set(itemId, node);
                 return node;
             }
@@ -1160,11 +1345,9 @@
             renderRectangularTree() {
                 if (!this.hasData) return;
                 
-                // 如果已经有渲染计划，跳过
                 if (this.renderScheduled) return;
                 this.renderScheduled = true;
                 
-                // 使用requestAnimationFrame优化性能
                 requestAnimationFrame(() => {
                     const container = document.getElementById('rectangular_tree_container');
                     const wrapper = document.getElementById('rectangular_tree_container_wrapper');
@@ -1177,8 +1360,7 @@
                     const maxWidth = parseInt(document.getElementById('max_width_filter_icicle').value) || 10000; 
                     
                     container.innerHTML = ''; 
-                    this._applyIcicleTransform();
-
+                    
                     let icicleRoots = Array.from(this.items.values())
                         .filter(item => item.isDetermined && item.depth > 0);
                     
@@ -1188,7 +1370,7 @@
                     );
                     
                     if (icicleRoots.length === 0) {
-                        container.innerHTML = `<p style="padding: 20px;">根据当前筛选条件，没有发现可分解的元素 (D>0)。</p>`;
+                        container.innerHTML = `<p style="padding: 20px; text-align: center; color: var(--light-text);">根据当前筛选条件，没有发现可分解的元素 (D>0)。</p>`;
                         this.logMessage("冰柱图渲染完成：没有满足筛选条件的元素。", false);
                         this.renderScheduled = false;
                         return;
@@ -1196,15 +1378,12 @@
 
                     const trees = icicleRoots.map(rootItem => this.getIcicleDecomposition(rootItem.id)).filter(t => t);
                     
-                    // 应用搜索筛选
                     const filteredTrees = trees.filter(tree => {
                         if (!searchName) return true;
                         
                         if (searchOnlyRoots) {
-                            // 只搜索根节点
                             return tree.name.toLowerCase().includes(searchName);
                         } else {
-                            // 搜索所有节点
                             let found = false;
                             const checkNode = (node) => {
                                 if (node.name.toLowerCase().includes(searchName)) { found = true; return; }
@@ -1216,13 +1395,12 @@
                     });
                     
                     if (filteredTrees.length === 0) {
-                         container.innerHTML = `<p style="padding: 20px;">未找到包含 "${searchName}" 的 Simple 路径。</p>`;
+                         container.innerHTML = `<p style="padding: 20px; text-align: center; color: var(--light-text);">未找到包含 "${searchName}" 的 Simple 路径。</p>`;
                          this.logMessage(`冰柱图搜索完成：未找到包含 "${searchName}" 的路径。`, false);
                          this.renderScheduled = false;
                         return;
                     }
 
-                    // 性能优化：当没有搜索/筛选时，使用虚拟滚动
                     const hasSearchOrFilter = searchName || 
                         minDepth !== 0 || maxDepth !== (this.icicleMaxDepth + 1) ||
                         minWidth !== 0 || maxWidth !== 10000;
@@ -1236,16 +1414,17 @@
                         this.renderAllRoots(filteredTrees, searchName);
                     }
                     
+                    this._constrainIcicleTransform();
+                    this._applyIcicleTransform();
+                    
                     this.renderScheduled = false;
                 });
             }
 
-            // 渲染所有根节点（无虚拟滚动）
             renderAllRoots(filteredTrees, searchName) {
                 const container = document.getElementById('rectangular_tree_container');
                 const wrapper = document.getElementById('rectangular_tree_container_wrapper');
                 
-                // 重置容器样式
                 container.style.position = 'static';
                 container.style.display = 'flex';
                 container.style.flexDirection = 'row';
@@ -1258,7 +1437,6 @@
                 let targetNodeX = -1; 
                 let accumulatedWidth = 0; 
                 
-                // 使用文档片段优化DOM操作
                 const fragment = document.createDocumentFragment();
                 
                 filteredTrees.forEach(tree => {
@@ -1266,7 +1444,7 @@
                     
                     const rootDiv = document.createElement('div');
                     rootDiv.className = 'icicle-root';
-                    rootDiv.style.position = 'relative'; // 使用相对定位
+                    rootDiv.style.position = 'relative';
                     rootDiv.style.width = `${rootPixelWidth}px`; 
 
                     const rootHtml = this._renderIcicleNode(tree, tree.width, searchName, accumulatedWidth, (foundX) => {
@@ -1286,28 +1464,21 @@
                     
                     this.iciclePanX = (wrapperCenterX / this.icicleZoomLevel) - targetNodeX;
                     this.iciclePanY = 0; 
-
-                    this._applyIcicleTransform();
-                    this.logMessage(`冰柱图搜索定位到 "${searchName}" 结果。`, false);
                 } else {
                     this.logMessage(`冰柱图渲染完成，显示 ${filteredTrees.length} 个根元素。`, false);
                 }
             }
 
-            // 虚拟滚动实现
             renderVirtualScroll() {
                 const container = document.getElementById('rectangular_tree_container');
                 const wrapper = document.getElementById('rectangular_tree_container_wrapper');
                 
-                // 设置容器样式
                 container.style.position = 'relative';
                 container.style.display = 'block';
                 
-                // 计算虚拟滚动参数
                 const totalWidth = this.allRoots.reduce((sum, tree) => sum + tree.width, 0) * this.ICICLE_BASE_UNIT_WIDTH;
                 container.style.width = `${totalWidth}px`;
                 
-                // 初始渲染可见区域
                 this.updateVirtualScroll();
                 
                 this.logMessage(`冰柱图使用虚拟滚动，显示 ${this.allRoots.length} 个根元素。`, false);
@@ -1319,20 +1490,16 @@
                 
                 if (!this.virtualScrollEnabled || !this.allRoots.length) return;
                 
-                // 计算可见区域（考虑缩放和平移）
                 const viewportWidth = wrapper.clientWidth;
                 const viewportHeight = wrapper.clientHeight;
                 
-                // 计算在原始坐标系中的可见区域
                 const visibleStartX = -this.iciclePanX / this.icicleZoomLevel;
                 const visibleEndX = (-this.iciclePanX + viewportWidth) / this.icicleZoomLevel;
                 
-                // 添加缓冲区（扩大可见区域范围，防止拖动时出现空白）
                 const buffer = viewportWidth / this.icicleZoomLevel * 0.5;
                 const visibleStartWithBuffer = Math.max(0, visibleStartX - buffer);
                 const visibleEndWithBuffer = visibleEndX + buffer;
                 
-                // 计算哪些根节点在可见区域内
                 let accumulatedWidth = 0;
                 const visibleRoots = [];
                 
@@ -1340,7 +1507,6 @@
                     const tree = this.allRoots[i];
                     const rootWidth = tree.width * this.ICICLE_BASE_UNIT_WIDTH;
                     
-                    // 检查根节点是否在可见区域内
                     if (accumulatedWidth + rootWidth >= visibleStartWithBuffer && accumulatedWidth <= visibleEndWithBuffer) {
                         visibleRoots.push({
                             tree,
@@ -1350,35 +1516,28 @@
                     }
                     
                     accumulatedWidth += rootWidth;
-                    // 如果已经超过可见区域，可以提前结束
                     if (accumulatedWidth > visibleEndWithBuffer) break;
                 }
                 
-                // 更新DOM
                 this.renderVisibleRoots(visibleRoots);
             }
 
             renderVisibleRoots(visibleRoots) {
                 const container = document.getElementById('rectangular_tree_container');
                 
-                // 创建文档片段，减少DOM操作
                 const fragment = document.createDocumentFragment();
                 
-                // 先隐藏所有现有根节点
                 const existingRoots = container.querySelectorAll('.icicle-root');
                 existingRoots.forEach(root => {
                     root.style.display = 'none';
                 });
                 
-                // 渲染或更新可见的根节点
                 visibleRoots.forEach(({tree, startX, index}) => {
                     const rootPixelWidth = tree.width * this.ICICLE_BASE_UNIT_WIDTH;
                     
-                    // 检查是否已经存在这个根节点
                     let rootDiv = container.querySelector(`.icicle-root[data-index="${index}"]`);
                     
                     if (!rootDiv) {
-                        // 创建新的根节点
                         rootDiv = document.createElement('div');
                         rootDiv.className = 'icicle-root';
                         rootDiv.setAttribute('data-index', index);
@@ -1390,13 +1549,11 @@
                         
                         fragment.appendChild(rootDiv);
                     } else {
-                        // 更新现有根节点的位置
                         rootDiv.style.left = `${startX}px`;
                         rootDiv.style.display = 'block';
                     }
                 });
                 
-                // 一次性更新DOM
                 container.appendChild(fragment);
             }
 
@@ -1442,7 +1599,6 @@
                 return { html: html, width: nodePixelWidth };
             }
 
-            // 其他方法保持不变...
             initialRenderDAG() {
                 if (!this.hasData) return;
                 const searchName = document.getElementById('dag_search_input').value.trim();
@@ -1454,7 +1610,7 @@
                 this.expandedNodeIds.clear();
 
                 if (!searchName || !searchItem || !searchItem.isDetermined) {
-                     container.innerHTML = `<p style="padding: 20px;">请输入一个有效的确定元素名称进行搜索。</p>`;
+                     container.innerHTML = `<p style="padding: 20px; text-align: center; color: var(--light-text);">请输入一个有效的确定元素名称进行搜索。</p>`;
                      return;
                 }
 
@@ -1694,7 +1850,7 @@
                             springConstant: 0.05
                         },
                         stabilization: {
-                            iterations: 1000, // 减少迭代次数提高性能
+                            iterations: 1000,
                             updateInterval: 50, 
                             onlyNecessary: true
                         }
@@ -1703,7 +1859,7 @@
                         dragNodes: true, 
                         zoomView: true, 
                         dragView: true,
-                        multiselect: false // 禁用多选提高性能
+                        multiselect: false
                     }
                 };
 
@@ -1717,12 +1873,10 @@
                 });
             }
             
-            // 全屏功能
             toggleFullscreen(elementId) {
                 const element = document.getElementById(elementId);
                 
                 if (!document.fullscreenElement) {
-                    // 进入全屏
                     if (element.requestFullscreen) {
                         element.requestFullscreen();
                     } else if (element.webkitRequestFullscreen) {
@@ -1732,8 +1886,13 @@
                     }
                     
                     element.classList.add('fullscreen');
+                    
+                    if (elementId === 'dag_graph_container' && this.network) {
+                        setTimeout(() => {
+                            this.network.fit();
+                        }, 100);
+                    }
                 } else {
-                    // 退出全屏
                     if (document.exitFullscreen) {
                         document.exitFullscreen();
                     } else if (document.webkitExitFullscreen) {
@@ -1743,6 +1902,12 @@
                     }
                     
                     element.classList.remove('fullscreen');
+                    
+                    if (elementId === 'dag_graph_container' && this.network) {
+                        setTimeout(() => {
+                            this.network.fit();
+                        }, 100);
+                    }
                 }
             }
         }
@@ -1761,7 +1926,6 @@
                 }
             });
             
-            // 监听全屏变化
             document.addEventListener('fullscreenchange', handleFullscreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
             document.addEventListener('msfullscreenchange', handleFullscreenChange);
@@ -1772,7 +1936,6 @@
                                          document.msFullscreenElement;
                 
                 if (!fullscreenElement) {
-                    // 退出全屏时移除全屏类
                     document.querySelectorAll('.fullscreen').forEach(el => {
                         el.classList.remove('fullscreen');
                     });
