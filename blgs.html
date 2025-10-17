@@ -2,1618 +2,1445 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>合成检索工具</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- LZ-String for compression -->
-    <script src="https://cdn.jsdelivr.net/gh/pieroxy/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    <title>无限合成检索工具</title>
     <style>
-        :root {
-            --primary: #2d5a27;
-            --primary-light: #4caf50;
-            --primary-dark: #1b3a1b;
-            --secondary: #37474f;
-            --secondary-light: #546e7a;
-            --secondary-dark: #263238;
-            --accent: #ff9800;
-            --accent-light: #ffb74d;
-            --accent-dark: #f57c00;
-            --success: #4caf50;
-            --warning: #ffb74d;
-            --danger: #f44336;
-            --surface: #121212;
-            --surface-light: #1e1e1e;
-            --surface-dark: #0a0a0a;
-            --text-primary: #e0e0e0;
-            --text-secondary: #b0b0b0;
-            --text-light: #757575;
-            --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-            --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-            --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-            --radius: 8px;
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); }
+        h1 { color: #007bff; border-bottom: 3px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; }
         
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        button { padding: 8px 12px; margin: 5px 10px 5px 0; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: background-color 0.3s; }
+        .btn-explore { background-color: #007bff; color: white; }
+        .btn-explore-pause { background-color: #dc3545; color: white; }
+        .btn-data { background-color: #6c757d; color: white; }
+        .btn-import-export { background-color: #28a745; color: white; }
+        .btn-copy { background-color: #ffc107; color: #333; margin-left: 10px; padding: 5px 10px; font-size: 13px;}
+        .btn-clear { background-color: #dc3545; color: white; }
+        .btn-explore:hover { background-color: #0056b3; }
+        .btn-explore-pause:hover { background-color: #c82333; }
+        .btn-data:hover { background-color: #5a6268; }
+        .btn-import-export:hover { background-color: #1e7e34; }
+        .btn-copy:hover { background-color: #e0a800; }
+        .btn-clear:hover { background-color: #c82333; }
         
-        body {
-            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: linear-gradient(135deg, #0a0a0a 0%, #1b3a1b 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            background-color: var(--surface-light);
-            border-radius: 12px;
-            box-shadow: var(--shadow-3);
-            overflow: hidden;
-            border: 1px solid var(--primary-dark);
-        }
-        
-        header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 25px 30px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        header::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
-            background-size: cover;
-        }
-        
-        h1 {
-            font-size: 2.2rem;
-            margin-bottom: 8px;
-            font-weight: 700;
-            position: relative;
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 0;
-            height: 80vh;
-        }
-        
-        @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                height: auto;
-            }
-        }
-        
-        .left-panel {
-            background-color: var(--surface);
-            padding: 25px;
-            border-right: 1px solid var(--surface-dark);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
-        }
-        
-        .right-panel {
-            padding: 25px;
-            background-color: var(--surface-light);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow: hidden;
-        }
-        
-        .panel {
-            background-color: var(--surface);
-            border-radius: var(--radius);
-            padding: 22px;
-            box-shadow: var(--shadow-1);
-            border: 1px solid var(--primary-dark);
-            transition: var(--transition);
-        }
-        
-        .panel:hover {
-            box-shadow: var(--shadow-2);
-        }
-        
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--primary-dark);
-        }
-        
-        .panel-header-controls {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .panel-icon {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            font-size: 1.1rem;
-            box-shadow: var(--shadow-1);
-        }
-        
-        .panel h2 {
-            color: var(--text-primary);
-            font-size: 1.4rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-        }
-        
-        button {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            border: none;
-            cursor: pointer;
-            padding: 12px 15px;
-            border-radius: var(--radius);
-            font-size: 1rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: var(--shadow-1);
-            transition: var(--transition);
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-2);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        button.accent {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
-        }
-        
-        button.secondary {
-            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 15px;
-        }
-        
-        .button-group button {
-            flex: 1;
-        }
-        
-        .input-group {
-            margin-bottom: 18px;
-        }
-        
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-        
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: var(--transition);
-            background-color: var(--surface-light);
-            color: var(--text-primary);
-        }
-        
-        .input-group input:focus, .input-group select:focus {
-            outline: none;
-            border-color: var(--primary-light);
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-        }
-        
-        .toggle-group {
-            display: flex;
-            align-items: center;
-            margin: 15px 0;
-            position: relative;
-        }
-        
-        .toggle-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-        
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-            margin-right: 10px;
-        }
-        
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--surface-dark);
-            transition: var(--transition);
-            border-radius: 34px;
-        }
-        
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: var(--transition);
-            border-radius: 50%;
-        }
-        
-        input:checked + .toggle-slider {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        }
-        
-        input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
-        
-        .log-output {
-            background-color: var(--surface-dark);
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
+        /* 手动合成区域样式 */
+        #manual_synthesis_controls {
             padding: 15px;
-            height: 200px;
-            overflow-y: auto;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.9rem;
-            margin-top: 15px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
         }
-        
-        .log-entry {
-            margin-bottom: 5px;
-            padding: 5px;
+        #manual_synthesis_controls input {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
             border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box; /* 确保 padding 不影响宽度 */
         }
-        
-        .log-entry.success {
-            background-color: rgba(76, 175, 80, 0.1);
-            color: var(--success);
-            border-left: 3px solid var(--success);
-        }
-        
-        .log-entry.error {
-            background-color: rgba(244, 67, 54, 0.1);
-            color: var(--danger);
-            border-left: 3px solid var(--danger);
-        }
-        
-        .log-entry.info {
-            background-color: rgba(33, 150, 243, 0.1);
-            color: #2196f3;
-            border-left: 3px solid #2196f3;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 15px;
-            border-radius: var(--radius);
-            text-align: center;
-            box-shadow: var(--shadow-1);
-        }
-        
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 0.85rem;
-            opacity: 0.9;
-        }
-        
-        /* 修复树容器滚动问题 */
-        .tree-container {
-            flex-grow: 1;
-            overflow: auto;
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
-            padding: 15px;
-            background-color: var(--surface-dark);
-            margin-top: 15px;
-            position: relative;
-            width: 100%;
-            height: 400px; /* 固定高度确保滚动条出现 */
-        }
-        
-        /* 新的树形结构样式 */
-        .tree {
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.95rem;
-            width: max-content;
-            min-width: 100%;
-            position: relative;
-        }
-        
-        .tree-node {
-            position: relative;
-            margin: 5px 0;
-        }
-        
-        .node-content {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: var(--radius);
-            background-color: var(--surface);
-            border: 1px solid var(--primary-dark);
-            transition: var(--transition);
-            position: relative;
-            z-index: 2;
-            width: fit-content;
-        }
-        
-        .node-content:hover {
-            background-color: var(--surface-light);
-            box-shadow: var(--shadow-1);
-        }
-        
-        .node-content.highlight {
-            background-color: var(--accent-dark);
-            color: white;
+        #synthesis_status {
+            color: #dc3545; 
             font-weight: bold;
-            box-shadow: 0 0 0 2px var(--accent);
+            margin-left: 15px;
         }
-        
-        .node-expand {
-            width: 24px;
-            height: 24px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 8px;
-            font-size: 0.8rem;
-            color: var(--primary-light);
-            background-color: var(--surface);
-            border-radius: 50%;
-            border: 1px solid var(--primary);
-            transition: var(--transition);
-        }
-        
-        .node-expand:hover {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .node-expand::before {
-            content: "▶";
-            transition: transform 0.2s;
-        }
-        
-        .tree-node.expanded > .node-content > .node-expand::before {
-            transform: rotate(90deg);
-        }
-        
-        .tree-node.collapsed > .children {
-            display: none;
-        }
-        
-        .children {
-            padding-left: 30px;
-            position: relative;
-            margin-top: 8px;
-        }
-        
-        .children::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 15px;
-            width: 1px;
-            background-color: var(--primary-dark);
-            z-index: 1;
-        }
-        
-        .recipe-path {
+
+        pre, textarea { background-color: #e9ecef; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin-top: 10px; font-size: 12px; border: 1px solid #ccc;}
+        .log-area { max-height: 250px; overflow-y: scroll; }
+
+        /* --- 表格容器和样式 (保持不变) --- */
+        .section-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            margin: 8px 0;
-            position: relative;
+            margin-top: 25px;
+            border-left: 5px solid #ffc107;
             padding-left: 10px;
         }
-        
-        .recipe-path::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 10px;
-            height: 1px;
-            background-color: var(--primary-dark);
-        }
-        
-        .recipe-path-content {
+        .section-header h3 { margin: 0; color: #333; }
+
+        .fixed-header-table {
             display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 5px 10px;
-            background-color: var(--surface-dark);
-            border-radius: var(--radius);
-            border: 1px solid var(--primary-dark);
+            flex-direction: column;
+            height: 300px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: white;
+            margin-top: 10px;
         }
-        
-        .recipe-connector {
+        .table-header {
             display: flex;
-            align-items: center;
-            gap: 5px;
-            margin: 0 5px;
-            color: var(--text-secondary);
-        }
-        
-        .recipe-connector i {
-            font-size: 0.8rem;
-        }
-        
-        .recipe-ingredient {
-            padding: 3px 8px;
-            background-color: var(--surface);
-            border-radius: 4px;
-            border: 1px solid var(--primary-dark);
-            transition: var(--transition);
-            cursor: pointer;
-        }
-        
-        .recipe-ingredient:hover {
-            background-color: var(--surface-light);
-        }
-        
-        .recipe-ingredient.highlight {
-            background-color: var(--accent-dark);
-            color: white;
             font-weight: bold;
+            background-color: #f1f1f1;
+            padding: 8px 15px;
+            border-bottom: 1px solid #ccc;
+            flex-shrink: 0; 
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            font-size: 13px;
         }
-        
-        .initial-item {
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
+        .table-header input {
+            width: 90%;
+            padding: 2px 0 2px 5px;
+            margin-top: 2px;
+            font-size: 11px;
+            border: 1px solid #ddd;
+            display: block;
         }
-        
-        .search-container {
-            position: relative;
-            margin-bottom: 15px;
+        .table-body {
+            overflow-y: scroll;
+            font-size: 12px;
         }
-        
-        .search-container i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-light);
-        }
-        
-        .search-container input {
-            padding-left: 45px;
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--primary-dark);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: var(--transition);
-            background-color: var(--surface-light);
-            color: var(--text-primary);
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-secondary);
-        }
-        
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: var(--primary-dark);
-        }
-        
-        .empty-state h3 {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-            color: var(--text-primary);
-        }
-        
-        .collapse-expand-btn {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 0.9rem;
+        .table-row {
             display: flex;
-            align-items: center;
-            gap: 5px;
-            box-shadow: var(--shadow-1);
+            padding: 6px 15px;
+            border-bottom: 1px solid #eee;
         }
-        
-        .collapse-expand-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-2);
-        }
-        
-        .tree-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .tree-controls .toggle-group {
-            margin: 0;
-        }
-        
-        .tree.search-active .tree-node.is-hidden {
-            display: none;
-        }
-        
-        .tree.search-active .tree-node.is-match > .node-content {
-            background-color: var(--accent-dark);
-            color: white;
-            font-weight: bold;
-        }
-        
-        .tree.search-active .tree-node.is-ancestor > .node-content {
-            background-color: rgba(255, 152, 0, 0.2);
-        }
-        
-        .tier-stats {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-        
-        .tier-stat {
-            padding: 5px 10px;
-            background-color: var(--surface-dark);
-            border-radius: var(--radius);
-            border: 1px solid var(--primary-dark);
-            font-size: 0.85rem;
-        }
-        
-        .tier-stat-value {
-            font-weight: bold;
-            color: var(--primary-light);
-        }
+        .table-row:last-child { border-bottom: none; }
+
+        /* Item Table Columns */
+        .col-seq { flex: 0.5; text-align: right; padding-right: 5px; font-weight: normal; color: #999;} 
+        .col-id { flex: 1.5; }
+        .col-depth { flex: 1; text-align: center;}
+        .col-width { flex: 1; text-align: center;}
+        .col-name { flex: 4; }
+
+        /* Recipe Detailed Table Columns */
+        .col-lid, .col-rid, .col-pid, .col-simple { flex: 1.25; text-align: center; }
+
+        /* Recipe Simple List Column */
+        .col-simple-list { flex: 4.75; text-align: left; padding-left: 5px; }
         
         .progress-container {
-            margin-top: 15px;
-            background-color: var(--surface-dark);
-            border-radius: var(--radius);
-            overflow: hidden;
-            height: 20px;
-            position: relative;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-        
-        .progress-info {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            margin-top: 10px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 10px;
-            font-size: 0.8rem;
-            color: var(--text-primary);
         }
-        
-        .tree-node.initial-element {
-            margin-bottom: 15px;
+        .progress-bar-style {
+            height: 10px;
+            width: 250px;
+            margin-left: 10px;
         }
+
+        /* 统计信息样式优化 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            background-color: #fff8e1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #ffd700;
+        }
+        .stats-item {
+            padding: 5px;
+            border-left: 3px solid #ffc107;
+            padding-left: 10px;
+            word-wrap: break-word; 
+        }
+        .stats-item strong { color: #333; }
+        .stats-item span { color: #007bff; font-weight: bold;}
+        .stats-list { white-space: pre-line; margin-top: 5px; }
         
-        .tree-root {
+        /* 可视化统计样式 */
+        .stats-visualization {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 15px;
+            margin-top: 10px;
         }
-        
-        /* 模态框样式 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+        .viz-container {
+            flex: 1;
+            min-width: 200px;
         }
-        
-        .modal-content {
-            background-color: var(--surface);
-            border-radius: var(--radius);
-            padding: 25px;
-            width: 90%;
-            max-width: 800px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: var(--shadow-3);
-            border: 1px solid var(--primary-dark);
-        }
-        
-        .modal-header {
+        .viz-bar-container {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--primary-dark);
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        .viz-label {
+            width: 40px;
+            text-align: right;
+            margin-right: 8px;
+        }
+        .viz-bar {
+            height: 16px;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            min-width: 3px;
+            position: relative;
+        }
+        .viz-count {
+            margin-left: 8px;
+            font-weight: bold;
+            color: #333;
         }
         
-        .modal-header h2 {
-            color: var(--text-primary);
-            font-size: 1.5rem;
-        }
-        
-        .close-btn {
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 5px;
-        }
-        
-        .close-btn:hover {
-            color: var(--accent);
-        }
-        
-        .recipe-list {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-        }
-        
-        .recipe-item {
-            padding: 10px;
-            border-bottom: 1px solid var(--primary-dark);
-            font-family: 'Consolas', 'Monaco', monospace;
-        }
-        
-        .recipe-item:last-child {
-            border-bottom: none;
-        }
-        
-        .modal-buttons {
+        /* 深度和宽度统计在同一行 */
+        .depth-width-stats {
+            grid-column: span 3;
             display: flex;
-            gap: 10px;
-            justify-content: flex-end;
+            gap: 20px;
         }
-        
-        .modal-buttons button {
-            flex: none;
+        .depth-stats, .width-stats {
+            flex: 1;
         }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <header>
-            <h1><i class="fas fa-atom"></i> 合成检索工具</h1>
-        </header>
+        <h1>无限合成检索工具</h1>
+        <p>Powered by HypnosPD</p>
+
+        <h2>操作控制</h2>
+        <button id="toggle-explore-btn" class="btn-explore" onclick="app.toggleExploration()">1. 开始遍历</button>
+        <button class="btn-data" onclick="app.exportData()">2. 导出 JSON</button>
+        <button class="btn-data" onclick="app.importData()">3. 导入 JSON</button>
+        <button class="btn-import-export" onclick="app.exportRecipesAsText()">4. 导出合成表 (TXT)</button>
+        <button class="btn-import-export" onclick="app.importRecipesFromText()">5. 导入合成表 (TXT)</button>
+        <button class="btn-clear" onclick="app.clearLocalData()">6. 清空本地数据</button>
         
-        <div class="main-content">
-            <div class="left-panel">
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-flask"></i>
-                            </div>
-                            <h2>手动合成</h2>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label for="itemA">元素 A</label>
-                        <input type="text" id="itemA" placeholder="输入第一个元素">
-                    </div>
-                    <div class="input-group">
-                        <label for="itemB">元素 B</label>
-                        <input type="text" id="itemB" placeholder="输入第二个元素">
-                    </div>
-                    <button id="synthesizeBtn">
-                        <i class="fas fa-plus-circle"></i> 合成
-                    </button>
-                </div>
-                
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-robot"></i>
-                            </div>
-                            <h2>自动遍历</h2>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button id="autoTraverseBtn">
-                            <i class="fas fa-play"></i> 自动遍历
-                        </button>
-                        <button id="stopTraverseBtn" class="accent" disabled>
-                            <i class="fas fa-stop"></i> 停止遍历
-                        </button>
-                    </div>
-                    <div class="progress-container">
-                        <div class="progress-bar" id="progressBar"></div>
-                        <div class="progress-info">
-                            <span id="progressText">0/0</span>
-                            <span id="progressPercent">0%</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-database"></i>
-                            </div>
-                            <h2>数据管理</h2>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button id="exportBtn">
-                            <i class="fas fa-download"></i> 导出数据
-                        </button>
-                        <button id="importBtn">
-                            <i class="fas fa-upload"></i> 导入数据
-                        </button>
-                        <button id="viewRecipesBtn" class="secondary">
-                            <i class="fas fa-list"></i> 查看合成表
-                        </button>
-                        <button id="resetBtn" class="accent">
-                            <i class="fas fa-trash-alt"></i> 重置数据
-                        </button>
-                    </div>
-                    <input type="file" id="importFile" accept=".txt" style="display: none;">
-                </div>
+        <br>
+        
+        <h2>手动合成</h2>
+        <div id="manual_synthesis_controls">
+            <input type="text" id="material_a_name" placeholder="素材 A 名称 (需已发现)" list="item_names_datalist" style="width: 200px; margin-right: 10px;">
+            <input type="text" id="material_b_name" placeholder="素材 B 名称 (需已发现)" list="item_names_datalist" style="width: 200px; margin-right: 10px;">
+            <span style="font-weight: bold; margin-right: 10px;">=</span>
+            <span id="result_c_name" style="width: 200px; margin-right: 15px; padding: 8px 10px; background-color: #f8f9fa; border-radius: 4px; min-height: 18px;">?</span>
+            <button id="synthesize_btn" class="btn-import-export" onclick="app.manualSynthesize()">合成</button>
+            <p id="synthesis_status"></p>
+        </div>
 
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-chart-bar"></i>
-                            </div>
-                            <h2>统计</h2>
-                        </div>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="totalElements">0</div>
-                            <div class="stat-label">词汇总数</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="totalRecipes">0</div>
-                            <div class="stat-label">规则总数</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="pendingCombinations">0</div>
-                            <div class="stat-label">待探索组合</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-terminal"></i>
-                            </div>
-                            <h2>日志输出</h2>
-                        </div>
-                    </div>
-                    <div class="log-output" id="logOutput">
-                        <!-- 日志将在这里显示 -->
-                    </div>
-                </div>
-            </div>
+        <h2>系统日志</h2>
+        <pre id="log_area" class="log-area"></pre>
+
+        <h2>当前状态</h2>
+        <div class="status-box">
+            <p>
+                <strong>遍历状态:</strong> <span id="traversal_status">已暂停</span> |
+                <strong>Max Positive ID:</strong> <span id="max_id">N/A</span> | 
+                <strong>Min Negative ID:</strong> <span id="min_id">N/A</span> |
+                <strong>探索进度:</strong> <span id="exp_depth">N/A</span>
+            </p>
             
-            <div class="right-panel">
-                <div class="panel">
-                    <div class="panel-header">
-                        <div style="display: flex; align-items: center;">
-                            <div class="panel-icon">
-                                <i class="fas fa-sitemap"></i>
-                            </div>
-                            <h2>合成树</h2>
-                        </div>
-                        <div class="panel-header-controls">
-                            <button id="collapseAllBtn" class="collapse-expand-btn">
-                                <i class="fas fa-compress-alt"></i> 全部折叠
-                            </button>
-                            <button id="expandAllBtn" class="collapse-expand-btn">
-                                <i class="fas fa-expand-alt"></i> 全部展开
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="tree-controls">
-                        <div class="toggle-group">
-                            <label class="toggle-label">
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="singleRecipeMode" checked>
-                                    <span class="toggle-slider"></span>
-                                </div>
-                                每个元素只显示一种合成方式
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="search-container">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchInput" placeholder="搜索元素...">
-                    </div>
-                    
-                    <div class="tier-stats" id="tierStats">
-                        <!-- 层级统计将在这里显示 -->
-                    </div>
-                    
-                    <div class="tree-container" id="treeContainer">
-                        <div class="tree" id="synthesisTree">
-                           <!-- Tree will be rendered here -->
-                        </div>
-                    </div>
+            <div class="progress-container">
+                <strong>当前深度进度 (D=<span id="current_depth">N/A</span>):</strong>
+                <span id="progress_text">N/A</span>
+                <progress id="progress_bar" value="0" max="100" class="progress-bar-style"></progress>
+            </div>
+
+            <div id="statistics_block" class="stats-grid">
+                <!-- 统计信息将通过JavaScript动态生成 -->
+            </div>
+
+            <div class="section-header">
+                <h3>所有 Item</h3>
+                <button class="btn-copy" onclick="copyContent('item_list')">复制全部内容</button>
+            </div>
+            <div id="item_list" class="fixed-header-table"></div>
+
+            <div class="section-header">
+                <h3>所有 Recipe</h3>
+                <div>
+                    <button class="btn-data" onclick="app.toggleRecipeDisplay()">切换合成表</button>
+                    <button class="btn-copy" onclick="copyContent('recipe_list')">复制全部内容</button>
                 </div>
             </div>
+            <div id="recipe_list" class="fixed-header-table"></div>
         </div>
     </div>
-
-    <!-- 合成表模态框 -->
-    <div id="recipeModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>合成表</h2>
-                <button class="close-btn" id="closeModalBtn">&times;</button>
-            </div>
-            <div class="recipe-list" id="recipeList">
-                <!-- 合成表将在这里显示 -->
-            </div>
-            <div class="modal-buttons">
-                <button id="exportRecipesBtn" class="accent">
-                    <i class="fas fa-download"></i> 导出合成表
-                </button>
-                <button id="closeModalBtn2">
-                    <i class="fas fa-times"></i> 关闭
-                </button>
-            </div>
-        </div>
-    </div>
+    
+    <datalist id="item_names_datalist"></datalist>
 
     <script>
-        // Initial setup and constants
-        const INITIAL_ELEMENTS = ['金', '木', '水', '火', '土'];
-        const corsProxy = 'https://api.allorigins.win/raw?url=';
-        
-        // Core data structures
-        let ElementID = {}; 
-        let CanonicalPath = {}; 
-        let AllRules = []; 
-        let FSet = new Set();
-        let currentId = 1;
-        
-        // State variables
-        let isAutoTraversing = false;
-        let traverseInterval = null;
-        
-        // DOM element references
-        const D = (id) => document.getElementById(id);
-        const itemAInput = D('itemA'), itemBInput = D('itemB'), synthesizeBtn = D('synthesizeBtn'),
-              autoTraverseBtn = D('autoTraverseBtn'), stopTraverseBtn = D('stopTraverseBtn'),
-              exportBtn = D('exportBtn'), importBtn = D('importBtn'), resetBtn = D('resetBtn'),
-              importFile = D('importFile'), logOutput = D('logOutput'),
-              totalElementsSpan = D('totalElements'), totalRecipesSpan = D('totalRecipes'),
-              pendingCombinationsSpan = D('pendingCombinations'),
-              progressBar = D('progressBar'), progressText = D('progressText'), progressPercent = D('progressPercent'),
-              singleRecipeMode = D('singleRecipeMode'), searchInput = D('searchInput'),
-              collapseAllBtn = D('collapseAllBtn'), expandAllBtn = D('expandAllBtn'),
-              tierStats = D('tierStats'), synthesisTree = D('synthesisTree'), treeContainer = D('treeContainer'),
-              viewRecipesBtn = D('viewRecipesBtn'), recipeModal = D('recipeModal'),
-              recipeList = D('recipeList'), closeModalBtn = D('closeModalBtn'),
-              closeModalBtn2 = D('closeModalBtn2'), exportRecipesBtn = D('exportRecipesBtn');
-
-        function init() {
-            // 尝试从localStorage加载数据
-            loadFromLocalStorage();
-            updateUI();
-            addEventListeners();
-            log('系统初始化完成', 'success');
+        // ----------------------------------------------------
+        // Z. 全局工具函数
+        // ----------------------------------------------------
+        function log(message) {
+            const logArea = document.getElementById('log_area');
+            const now = new Date().toLocaleTimeString('zh-CN');
+            logArea.textContent += `[${now}] ${message}\n`;
+            logArea.scrollTop = logArea.scrollHeight; 
         }
-        
-        function addEventListeners() {
-            synthesizeBtn.addEventListener('click', manualSynthesis);
-            autoTraverseBtn.addEventListener('click', startAutoTraverse);
-            stopTraverseBtn.addEventListener('click', stopAutoTraverse);
-            exportBtn.addEventListener('click', exportData);
-            importBtn.addEventListener('click', () => importFile.click());
-            importFile.addEventListener('change', importData);
-            resetBtn.addEventListener('click', resetData);
-            singleRecipeMode.addEventListener('change', updateAndRenderTree);
-            collapseAllBtn.addEventListener('click', () => toggleAllNodes(false));
-            expandAllBtn.addEventListener('click', () => toggleAllNodes(true));
-            searchInput.addEventListener('input', applySearchFilter);
-            viewRecipesBtn.addEventListener('click', showRecipeModal);
-            closeModalBtn.addEventListener('click', hideRecipeModal);
-            closeModalBtn2.addEventListener('click', hideRecipeModal);
-            exportRecipesBtn.addEventListener('click', exportRecipes);
+
+        async function copyContent(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
             
-            // 点击模态框外部关闭
-            window.addEventListener('click', (e) => {
-                if (e.target === recipeModal) {
-                    hideRecipeModal();
+            let contentToCopy = '';
+            
+            const headerSpans = element.querySelector('.table-header').children;
+            let headerText = '';
+            Array.from(headerSpans).slice(1).forEach(span => {
+                const text = span.querySelector('input') ? span.textContent.replace(span.querySelector('input').value, '').trim() : span.textContent.trim();
+                headerText += text + '\t';
+            });
+            contentToCopy += headerText.trim() + '\n';
+            
+            const rows = element.querySelectorAll('.table-body .table-row');
+            rows.forEach(row => {
+                if (row.style.display !== 'none') {
+                    const rowContent = Array.from(row.children).slice(1).map(span => span.textContent.trim()).join('\t');
+                    contentToCopy += rowContent + '\n';
                 }
             });
+            
+            try {
+                await navigator.clipboard.writeText(contentToCopy);
+                log(`[复制] 内容已成功复制到剪贴板。`);
+            } catch (err) {
+                log(`[复制失败] 请检查浏览器权限或手动复制。`);
+            }
+        }
+        
+        /**
+         * 自定义 ID 比较函数，用于排序：
+         * 1. 正数 ID 优先 (确定 Item)
+         * 2. 正数 ID 按值升序
+         * 3. 负数 ID 在后 (非确定 Item)
+         * 4. 负数 ID 按绝对值升序 (即 -1, -2, -3...)
+         */
+        function customIdCompare(idA, idB) {
+            const isAPositive = idA >= 0;
+            const isBPositive = idB >= 0;
+
+            // 1. Positive vs Negative: Positive first
+            if (isAPositive && !isBPositive) return -1;
+            if (!isAPositive && isBPositive) return 1;
+
+            // 2. Both Positive: standard ascending
+            if (isAPositive && isBPositive) {
+                return idA - idB;
+            }
+
+            // 3. Both Negative: absolute value ascending
+            if (!isAPositive && !isBPositive) {
+                return Math.abs(idA) - Math.abs(idB);
+            }
+            
+            return 0; // Should not happen
+        }
+        
+        // ----------------------------------------------------
+        // Y. 全局状态存储 (滚动和筛选)
+        // ----------------------------------------------------
+        const scrollPositions = {
+            itemList: 0,
+            recipeList: 0
+        };
+
+        const filterValues = {
+            'id': '',
+            'name': '',
+            'depth': '',
+            'width': '',
+            'recipe_simple_list': '', 
+            'lid': '',                
+            'rid': '',                
+            'pid': '',                
+            'simple': ''              
+        };
+        
+        // ----------------------------------------------------
+        // X. 表格筛选函数 (保持不变)
+        // ----------------------------------------------------
+        function filterTable(elementId, filterColumn) {
+            const filterInput = document.getElementById(`filter-${filterColumn}`);
+            
+            const filterValue = filterInput ? filterInput.value.toLowerCase().trim() : (filterValues[filterColumn] || '').toLowerCase().trim();
+            filterValues[filterColumn] = filterValue; 
+
+            const tableBody = document.getElementById(elementId).querySelector('.table-body');
+            if (!tableBody) return;
+
+            const isItemTable = (elementId === 'item_list');
+            const isSimpleRecipe = (elementId === 'recipe_list' && app.recipeDisplayMode);
+            const itemColIndexMap = { 'id': 1, 'depth': 2, 'width': 3, 'name': 4 }; 
+            const detailedRecipeColIndexMap = { 'lid': 1, 'rid': 2, 'pid': 3, 'simple': 4 };
+            const simpleRecipeColIndexMap = { 'recipe_simple_list': 1 };
+
+            Array.from(tableBody.children).forEach(row => {
+                const cells = Array.from(row.children);
+                let isMatch = true;
+                
+                if (isItemTable) {
+                    const idText = cells[itemColIndexMap['id']].textContent.split('(')[0].trim();
+                    if (filterValues['id'] && !idText.includes(filterValues['id'])) isMatch = false;
+
+                    const nameText = cells[itemColIndexMap['name']].textContent.toLowerCase();
+                    if (isMatch && filterValues['name'] && !nameText.includes(filterValues['name'])) isMatch = false;
+                    
+                    const depthText = cells[itemColIndexMap['depth']].textContent.trim();
+                    if (isMatch && filterValues['depth']) {
+                        if (String(depthText) !== filterValues['depth']) isMatch = false;
+                    }
+                    
+                    const widthText = cells[itemColIndexMap['width']].textContent.trim();
+                    if (isMatch && filterValues['width']) {
+                        if (String(widthText) !== filterValues['width']) isMatch = false;
+                    }
+
+                } else if (isSimpleRecipe) {
+                    const recipeText = cells[simpleRecipeColIndexMap['recipe_simple_list']].textContent.toLowerCase();
+                    if (filterValues['recipe_simple_list'] && !recipeText.includes(filterValues['recipe_simple_list'])) isMatch = false;
+
+                } else {
+                    const lidText = cells[detailedRecipeColIndexMap['lid']].textContent.trim();
+                    if (filterValues['lid'] && !lidText.includes(filterValues['lid'])) isMatch = false;
+
+                    const ridText = cells[detailedRecipeColIndexMap['rid']].textContent.trim();
+                    if (isMatch && filterValues['rid'] && !ridText.includes(filterValues['rid'])) isMatch = false;
+                    
+                    const pidText = cells[detailedRecipeColIndexMap['pid']].textContent.trim();
+                    if (isMatch && filterValues['pid'] && !pidText.includes(filterValues['pid'])) isMatch = false;
+                    
+                    const simpleText = cells[detailedRecipeColIndexMap['simple']].textContent.toLowerCase().trim();
+                    const simpleFilter = filterValues['simple'].toLowerCase().trim();
+                    if (isMatch && simpleFilter && !simpleText.includes(simpleFilter)) isMatch = false;
+                }
+
+                row.style.display = isMatch ? 'flex' : 'none';
+            });
+        }
+        
+        // ----------------------------------------------------
+        // W. 进度条计算函数 (保持不变)
+        // ----------------------------------------------------
+        function calculateProgress(S_D_length, A_idx, B_idx) {
+            if (S_D_length === 0) return { current: 0, total: 0, percentage: 0 };
+            
+            const total = S_D_length * (S_D_length + 1) / 2;
+            let completedSteps = 0;
+            
+            for (let i = 0; i < A_idx; i++) {
+                completedSteps += (S_D_length - i);
+            }
+            
+            completedSteps += (B_idx - A_idx + 1);
+            
+            const percentage = (completedSteps / total) * 100;
+            
+            return {
+                current: completedSteps,
+                total: total,
+                percentage: isNaN(percentage) ? 0 : Math.min(100, percentage)
+            };
         }
 
-        // --- Data Management ---
-        function initializeData() {
-            ElementID = {};
-            CanonicalPath = {};
-            AllRules = [];
-            FSet.clear();
-            currentId = 1;
-            INITIAL_ELEMENTS.forEach(addNewElement);
-            initializeFSet();
-            recalculateCanonicalPaths();
+        // ----------------------------------------------------
+        // V. 统计信息计算和可视化
+        // ----------------------------------------------------
+        function calculateStatistics(state) {
+            const stats = {
+                totalItems: state.items.size,
+                determinedItems: 0,
+                undeterminedItems: 0,
+                totalRecipes: state.recipes.size,
+                simpleRecipes: 0,
+                itemsPerDepth: {},
+                itemsPerWidth: {}
+            };
+
+            state.items.forEach(item => {
+                if (item.isDetermined) {
+                    stats.determinedItems++;
+                    
+                    const D = item.depth;
+                    stats.itemsPerDepth[D] = (stats.itemsPerDepth[D] || 0) + 1;
+                    
+                    const W = item.width;
+                    stats.itemsPerWidth[W] = (stats.itemsPerWidth[W] || 0) + 1;
+                } else {
+                    stats.undeterminedItems++;
+                }
+            });
+            
+            state.recipes.forEach((isSimple) => {
+                if (isSimple) {
+                    stats.simpleRecipes++;
+                }
+            });
+            
+            return stats;
         }
 
-        function addNewElement(name) {
-            if (ElementID[name]) return ElementID[name];
-            const id = currentId++;
-            ElementID[name] = id;
-            CanonicalPath[id] = [id];
-            log(`发现新元素: ${name} (ID: ${id})`, 'info');
-            return id;
+        // 生成可视化统计HTML
+        function generateVisualizationHTML(stats) {
+            // 深度统计可视化
+            const depthEntries = Object.entries(stats.itemsPerDepth).sort(([d1], [d2]) => Number(d1) - Number(d2));
+            const maxDepthCount = Math.max(...Object.values(stats.itemsPerDepth), 1);
+            
+            let depthVizHTML = '<div class="depth-stats"><strong>各深度Item数:</strong><div class="stats-visualization">';
+            depthEntries.forEach(([depth, count]) => {
+                const percentage = (count / maxDepthCount) * 100;
+                depthVizHTML += `
+                    <div class="viz-bar-container">
+                        <div class="viz-label">D${depth}</div>
+                        <div class="viz-bar" style="width: ${percentage}%"></div>
+                        <div class="viz-count">${count}</div>
+                    </div>
+                `;
+            });
+            depthVizHTML += '</div></div>';
+            
+            // 宽度统计可视化
+            const widthEntries = Object.entries(stats.itemsPerWidth).sort(([w1], [w2]) => Number(w1) - Number(w2));
+            const maxWidthCount = Math.max(...Object.values(stats.itemsPerWidth), 1);
+            
+            let widthVizHTML = '<div class="width-stats"><strong>各宽度Item数:</strong><div class="stats-visualization">';
+            widthEntries.forEach(([width, count]) => {
+                const percentage = (count / maxWidthCount) * 100;
+                widthVizHTML += `
+                    <div class="viz-bar-container">
+                        <div class="viz-label">W${width}</div>
+                        <div class="viz-bar" style="width: ${percentage}%"></div>
+                        <div class="viz-count">${count}</div>
+                    </div>
+                `;
+            });
+            widthVizHTML += '</div></div>';
+            
+            return { depthVizHTML, widthVizHTML };
         }
 
-        function getOrCreateElementId(name) {
-            return ElementID[name] || addNewElement(name);
+
+        // ====================================================================
+        // I. 数据结构定义
+        // ====================================================================
+        class Item {
+            constructor(id, name, depth = -1, width = 1) {
+                this.id = id; this.name = name; this.depth = depth; this.width = width;
+            }
+            get isDetermined() { return this.id >= 0; }
         }
 
-        function getElementName(id) {
-            return Object.keys(ElementID).find(name => ElementID[name] === id);
+        class Recipe {
+            constructor(idA, idB, idC, simple = false) {
+                const [lid, rid] = idA <= idB ? [idA, idB] : [idB, idA];
+                this.id = [lid, rid, idC]; 
+                this.simple = simple; 
+            }
+            get key() { return JSON.stringify(this.id); }
         }
 
-        function initializeFSet() {
-            FSet.clear();
-            const knownCombinations = new Set(AllRules.map(rule => JSON.stringify(rule[0].sort((a, b) => a - b))));
-            const ids = Object.values(ElementID);
-            for (let i = 0; i < ids.length; i++) {
-                for (let j = i; j < ids.length; j++) {
-                    const combinationKey = JSON.stringify([ids[i], ids[j]].sort((a, b) => a - b));
-                    if (!knownCombinations.has(combinationKey)) {
-                        FSet.add(combinationKey);
+        class State {
+            constructor() {
+                this.elements = ['金', '木', '水', '火', '土']; 
+                this.recipes = new Map();   
+                this.items = new Map();     
+                this.max_positive_id = -1;
+                this.min_negative_id = -1;
+                this.exploration_depth = 0; 
+                this.exploration_A_idx = 0; 
+                this.exploration_B_idx = 0; 
+                this.traversal_complete = true; 
+            }
+            getSimpleRecipesForItem(itemId) {
+            const simpleRecipes = [];
+            this.recipes.forEach((isSimple, key) => {
+                if (isSimple === true) {
+                    const [,, pid] = JSON.parse(key);
+                    if (pid === itemId) {
+                        simpleRecipes.push(key);
                     }
                 }
-            }
+            });
+            return simpleRecipes;
+        }
         }
 
-        function addSynthesisRule(a, b, result) {
-            const aId = getOrCreateElementId(a);
-            const bId = getOrCreateElementId(b);
-            const resultId = getOrCreateElementId(result);
-            const combinationKey = JSON.stringify([aId, bId].sort((a, b) => a - b));
-            
-            FSet.delete(combinationKey);
+        // ====================================================================
+        // II. 状态管理与核心算法实现
+        // ====================================================================
 
-            const ruleExists = AllRules.some(rule => 
-                JSON.stringify(rule[0].sort((a, b) => a - b)) === combinationKey && rule[1] === resultId
-            );
-
-            if (ruleExists) {
-                log(`规则已存在: ${a} + ${b} = ${result}`, 'info');
-                return false;
+        class SynthesisApp {
+            constructor() {
+                this.state = new State();
+                this.isTraversing = false; 
+                this.recipeDisplayMode = false;
+                this.traversalTimeout = null;
             }
 
-            AllRules.push([[aId, bId], resultId]);
-            log(`添加新规则: ${a} + ${b} = ${result}`, 'success');
-            
-            recalculateCanonicalPaths();
-
-            const allIds = Object.values(ElementID);
-            for (const otherId of allIds) {
-                const newCombination = JSON.stringify([resultId, otherId].sort((a, b) => a - b));
-                if (!AllRules.some(r => JSON.stringify(r[0].sort()) === newCombination)) {
-                    FSet.add(newCombination);
+            // A. API 调用 (保持不变)
+            async callSynthesisApi(itemAName, itemBName) {
+                const encodedItemA = encodeURIComponent(itemAName);
+                const encodedItemB = encodeURIComponent(itemBName);
+                const apiUrl = `https://hc.tsdo.in/api?itemA=${encodedItemA}&itemB=${encodedItemB}`;
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) return null;
+                    const data = await response.json();
+                    return data.item || null; 
+                } catch (error) {
+                    return null;
                 }
             }
             
-            // 保存到localStorage
-            saveToLocalStorage();
-            return true;
-        }
-
-        function recalculateCanonicalPaths() {
-            let changed = true;
-            while (changed) {
-                changed = false;
-                Object.values(ElementID).forEach(id => {
-                    AllRules.forEach(([sources, targetId]) => {
-                        if (targetId !== id) return;
-                        const [lId, rId] = sources;
-                        const pathL = CanonicalPath[lId] || [lId];
-                        const pathR = CanonicalPath[rId] || [rId];
-                        let potentialPath = [...new Set([...pathL, ...pathR])].sort((a, b) => a - b);
-                        
-                        if (isPathBetter(potentialPath, CanonicalPath[id])) {
-                            CanonicalPath[id] = potentialPath;
-                            changed = true;
-                        }
-                    });
-                });
+            // B. 持久化与辅助函数 (保持不变)
+            saveState() {
+                const data = {
+                    items: Array.from(this.state.items.entries()), 
+                    recipes: Array.from(this.state.recipes.entries()), 
+                    max_positive_id: this.state.max_positive_id,
+                    min_negative_id: this.state.min_negative_id,
+                    exploration_depth: this.state.exploration_depth,
+                    exploration_A_idx: this.state.exploration_A_idx,
+                    exploration_B_idx: this.state.exploration_B_idx,
+                    traversal_complete: this.state.traversal_complete,
+                    recipeDisplayMode: this.recipeDisplayMode 
+                };
+                try {
+                    localStorage.setItem('synthesisAppState', JSON.stringify(data));
+                } catch (e) {
+                    log("警告: 无法保存状态到本地存储。");
+                }
             }
-        }
 
-        function isPathBetter(newPath, currentPath) {
-            if (!currentPath) return true;
-            if (newPath.length < currentPath.length) return true;
-            if (newPath.length > currentPath.length) return false;
-            return newPath.join(',') < currentPath.join(',');
-        }
+            loadState() {
+                try {
+                    const jsonStr = localStorage.getItem('synthesisAppState');
+                    if (!jsonStr) return false;
 
-        // --- API & Automation ---
-        async function callSynthesisAPI(a, b) {
-            log(`正在尝试合成: ${a} + ${b}...`, 'info');
-            synthesizeBtn.innerHTML = '<div class="loading"></div> 合成中...';
-            synthesizeBtn.disabled = true;
+                    const data = JSON.parse(jsonStr);
+                    
+                    this.state = new State();
+                    this.state.items = new Map(data.items.map(([id, item]) => [Number(id), Object.assign(new Item(), item)]));
+                    this.state.recipes = new Map(data.recipes); 
+                    this.state.max_positive_id = data.max_positive_id;
+                    this.state.min_negative_id = data.min_negative_id;
+                    this.state.exploration_depth = data.exploration_depth;
+                    this.state.exploration_A_idx = data.exploration_A_idx;
+                    this.state.exploration_B_idx = data.exploration_B_idx;
+                    this.state.traversal_complete = data.traversal_complete;
+                    this.recipeDisplayMode = data.recipeDisplayMode !== undefined ? data.recipeDisplayMode : false;
+                    
+                    return true;
 
-            try {
-                const url = `${corsProxy}${encodeURIComponent(`https://hc.tsdo.in/api?itemA=${a}&itemB=${b}`)}`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`API请求失败: ${response.status}`);
-                const data = await response.json();
+                } catch (e) {
+                    log(`加载状态失败: ${e.message}。将尝试重新初始化。`);
+                    localStorage.removeItem('synthesisAppState');
+                    this.state = new State(); 
+                    return false;
+                }
+            }
+
+            getItemNameById(id) {
+                return this.state.items.get(id)?.name || `ID:${id}(未知)`;
+            }
+
+            getElementByName(name) {
+                for (const item of this.state.items.values()) {
+                    if (item.name === name) return item;
+                }
+                return null;
+            }
+
+
+            // C. 状态变更算法 (保持不变)
+            promoteItemID(id_old, id_new, itemObj, skipSave = false) { 
+                log(`   -> [状态升级] ${itemObj.name}: ID ${id_old} -> ${id_new}`);
+                this.state.items.delete(id_old);
+                itemObj.id = id_new;
+                this.state.items.set(id_new, itemObj);
                 
-                if (data.item) {
-                    if (addSynthesisRule(a, b, data.item)) {
-                        updateAndRenderTree();
+                const newRecipesMap = new Map(); 
+
+                this.state.recipes.forEach((isSimple, key) => { 
+                    const recipeArr = JSON.parse(key);
+                    let [lid, rid, pid] = recipeArr;
+                    let currentSimple = isSimple; 
+
+                    if (pid === id_old) { pid = id_new; }
+                    if (lid === id_old) { lid = id_new; } 
+                    else if (rid === id_old) { rid = id_new; }
+
+                    const [new_lid, new_rid] = lid <= rid ? [lid, rid] : [rid, lid];
+                    const newKey = JSON.stringify([new_lid, new_rid, pid]);
+                    
+                    newRecipesMap.set(newKey, currentSimple); 
+                });
+                this.state.recipes = newRecipesMap; 
+                
+                if (!skipSave) { 
+                    this.saveState(); 
+                }
+            }
+
+            async addRecipe(idA, idB, resultName, isExploration = false, skipSave = false) { 
+                const itemA = this.state.items.get(idA);
+                const itemB = this.state.items.get(idB);
+                if (!itemA || !itemB) return null;
+
+                let itemC = this.getElementByName(resultName);
+                
+                const shouldSave = !skipSave; 
+
+                const D_new = Math.max(itemA.depth, itemB.depth) + 1;
+                const W_new = itemA.width + itemB.width;
+                let is_shortest_path_found = false;
+                let should_update_simple = false;
+
+                // 检查是否已存在相同结果的recipe
+                if (itemC && itemC.isDetermined) {
+                    const existingRecipeKey = new Recipe(idA, idB, itemC.id).key;
+                    if (this.state.recipes.get(existingRecipeKey) === true) {
+                        return null; 
+                    } 
+                }
+
+                if (!itemC) {
+                    if (isExploration) {
+                        this.state.max_positive_id++;
+                        itemC = new Item(this.state.max_positive_id, resultName, D_new, W_new);
+                        this.state.items.set(itemC.id, itemC);
+                        is_shortest_path_found = true;
+                        should_update_simple = true;
+                        log(`   -> [新发现] ${resultName}: ID ${itemC.id}, Depth ${D_new}`);
+                    } else {
+                        this.state.min_negative_id--;
+                        const temp_id = this.state.min_negative_id;
+                        itemC = new Item(temp_id, resultName, D_new, W_new); 
+                        this.state.items.set(temp_id, itemC);
+                        log(`   -> [非探创建] ${resultName}: 暂定 ID ${temp_id}, Depth ${D_new}`);
                     }
                 } else {
-                    log(`合成无结果: ${a} + ${b}`, 'warn');
-                    const [aId, bId] = [ElementID[a], ElementID[b]];
-                    if (aId && bId) FSet.delete(JSON.stringify([aId, bId].sort((c, d) => c - d)));
+                    const D_old = itemC.depth;
+                    
+                    if (D_new < D_old) {
+                        // 找到更短路径
+                        itemC.depth = D_new;
+                        itemC.width = W_new;
+                        is_shortest_path_found = true;
+                        should_update_simple = true;
+                        
+                        if (itemC.id < 0) {
+                            this.state.max_positive_id++;
+                            this.promoteItemID(itemC.id, this.state.max_positive_id, itemC, !isExploration); 
+                        } else {
+                            log(`   -> [路径优化] ${itemC.name}: Depth ${D_old} -> ${D_new}`);
+                        }
+                    } else if (D_new === D_old) {
+                        // 深度相同，检查宽度优化
+                        if (W_new < itemC.width) {
+                            itemC.width = W_new;
+                            is_shortest_path_found = true;
+                            should_update_simple = true; // 关键修改：深度相同但宽度更小时也更新simple
+                            log(`   -> [Width优化] ${itemC.name}: Width ${itemC.width} -> ${W_new}`);
+                        }
+                        
+                        if (isExploration) {
+                            if (itemC.id < 0) {
+                                is_shortest_path_found = true;
+                                should_update_simple = true;
+                                this.state.max_positive_id++;
+                                this.promoteItemID(itemC.id, this.state.max_positive_id, itemC, false); 
+                            } else if (itemC.id > 0 && should_update_simple) {
+                                // 确定状态元素，在宽度优化时也要更新simple
+                                is_shortest_path_found = true;
+                            }
+                        }
+                    }
                 }
-            } catch (error) {
-                log(`合成 "${a} + ${b}" 失败: ${error.message}`, 'error');
-            } finally {
-                synthesizeBtn.innerHTML = '<i class="fas fa-plus-circle"></i> 合成';
-                synthesizeBtn.disabled = false;
-                updateUI();
+
+                const pid_final = itemC.id; 
+                const recipeKey = new Recipe(itemA.id, itemB.id, pid_final).key;
+                
+                // 关键修改：确保每个元素只有一个simple recipe
+                let currentIsSimple = false;
+                
+                if (isExploration && is_shortest_path_found) {
+                    // 检查是否应该将此recipe设为simple
+                    if (should_update_simple) {
+                        currentIsSimple = true;
+                        
+                        // 清理该元素的其他simple recipe
+                        this._clearOtherSimpleRecipes(pid_final, recipeKey);
+                    }
+                }
+
+                if (this.state.recipes.has(recipeKey)) {
+                    const existingIsSimple = this.state.recipes.get(recipeKey);
+
+                    if (existingIsSimple === true) return null; 
+
+                    if (currentIsSimple === true) {
+                        this.state.recipes.set(recipeKey, true); 
+                        log(`   -> [更新配方] ${itemA.name} + ${itemB.name} -> ${itemC.name}. 状态升级为 Simple: True`);
+                        if (shouldSave) this.saveState(); 
+                        return { key: recipeKey, simple: true };
+                    }
+                } else {
+                    this.state.recipes.set(recipeKey, currentIsSimple);
+                    log(`   -> [记录配方] ${itemA.name} + ${itemB.name} -> ${itemC.name}. Simple: ${currentIsSimple}`);
+                    if (shouldSave) this.saveState(); 
+                    return { key: recipeKey, simple: currentIsSimple };
+                }
+                
+                return null;
             }
-        }
 
-        function manualSynthesis() {
-            const a = itemAInput.value.trim();
-            const b = itemBInput.value.trim();
-            if (a && b) callSynthesisAPI(a, b);
-            else log('请输入两个元素名称', 'error');
-        }
+            // 新增方法：清理元素的其它simple recipe
+            _clearOtherSimpleRecipes(targetPid, currentRecipeKey) {
+                let clearedCount = 0;
+                
+                // 遍历所有recipe，找到相同pid但不同key的simple recipe
+                this.state.recipes.forEach((isSimple, key) => {
+                    if (isSimple === true && key !== currentRecipeKey) {
+                        const [,, pid] = JSON.parse(key);
+                        if (pid === targetPid) {
+                            this.state.recipes.set(key, false);
+                            clearedCount++;
+                            
+                            // 记录被清理的recipe信息
+                            const [lid, rid] = JSON.parse(key);
+                            const nameA = this.getItemNameById(lid);
+                            const nameB = this.getItemNameById(rid);
+                            const nameC = this.getItemNameById(pid);
+                            log(`   -> [清理Simple] ${nameA} + ${nameB} = ${nameC} 的Simple标记已移除`);
+                        }
+                    }
+                });
+                
+                if (clearedCount > 0) {
+                    log(`   -> [Simple清理完成] 为元素 ${this.getItemNameById(targetPid)} 清理了 ${clearedCount} 个旧的simple recipe`);
+                }
+            }
+            
+            // D. 遍历控制 (保持不变)
+            async exploreNextDepth() {
+                if (!this.isTraversing) return false; 
+                
+                const D_target = this.state.exploration_depth;
+                log(`\n--- 开始探索深度 D=${D_target} ---`);
+                
+                const S_D = Array.from(this.state.items.values()).filter(item => item.isDetermined && item.depth <= D_target);
+                S_D.sort((a, b) => a.id - b.id);
+                
+                if (S_D.length === 0 && D_target > 0) {
+                    log("遍历完成，没有更多确定状态的元素可供探索。");
+                    return false;
+                }
 
-        function startAutoTraverse() {
-            if (isAutoTraversing) return;
-            isAutoTraversing = true;
-            autoTraverseBtn.disabled = true;
-            stopTraverseBtn.disabled = false;
-            log('开始自动遍历', 'info');
+                let hasChanges = false;
+                
+                let currentAIdx = this.state.exploration_A_idx;
+                let currentBIdx = this.state.exploration_B_idx;
+                
+                for (let i = currentAIdx; i < S_D.length; i++) {
+                    const itemA = S_D[i];
+                    const startB = (i === currentAIdx) ? currentBIdx : i;
+                    
+                    for (let j = startB; j < S_D.length; j++) {
+                        if (!this.isTraversing) {
+                            this.state.exploration_A_idx = i;
+                            this.state.exploration_B_idx = j;
+                            log(`遍历在 D=${D_target} 处暂停。`);
+                            return false; 
+                        }
 
-            traverseInterval = setInterval(async () => {
-                if (!isAutoTraversing || FSet.size === 0) {
-                    stopAutoTraverse();
-                    if (FSet.size === 0) log('所有组合已探索完毕', 'success');
+                        const itemB = S_D[j];
+
+                        this.state.exploration_A_idx = i;
+                        this.state.exploration_B_idx = j;
+                        
+                        const resultName = await this.callSynthesisApi(itemA.name, itemB.name);
+                        
+                        if (resultName) {
+                            const old_max_id = this.state.max_positive_id;
+                            const recipeResult = await this.addRecipe(itemA.id, itemB.id, resultName, true); 
+                            
+                            if (this.state.max_positive_id > old_max_id || (recipeResult && recipeResult.simple)) {
+                                hasChanges = true;
+                            }
+                        }
+                        
+                        if ((i === currentAIdx && j % 2 === 0) || j === S_D.length - 1) { 
+                            this.renderStatus(true, true); 
+                        }
+                    }
+                    this.state.exploration_B_idx = i + 1; 
+                }
+
+                log(`深度 D=${D_target} 探索完毕。`);
+                this.state.exploration_A_idx = 0;
+                this.state.exploration_B_idx = 0;
+                this.state.exploration_depth++;
+                this.state.traversal_complete = true;
+                this.saveState();
+                return hasChanges;
+            }
+            
+            toggleExploration() {
+                if (this.isTraversing) {
+                    this.isTraversing = false;
+                    clearTimeout(this.traversalTimeout);
+                    log("遍历流程已暂停。");
+                } else {
+                    if (this.state.items.size === 0 && this.state.max_positive_id < 0) {
+                        log("警告: Item 列表为空，尝试重新初始化。");
+                        this.initialize();
+                    }
+                    this.isTraversing = true;
+                    log("遍历流程开始/恢复...");
+                    this._runExplorationLoop();
+                }
+                this._updateControlUI();
+                this.renderStatus();
+            }
+
+            async _runExplorationLoop() {
+                let changesFound = true;
+                const maxDepth = 5; 
+                
+                while(this.isTraversing && changesFound && this.state.exploration_depth < maxDepth) {
+                    this.state.traversal_complete = false;
+                    this.renderStatus(); 
+                    
+                    changesFound = await this.exploreNextDepth();
+                    
+                    if (!this.isTraversing) return; 
+
+                    if (!changesFound) {
+                        log("所有最短路径已穷尽。遍历流程结束。");
+                        break;
+                    }
+                    this.state.traversal_complete = true;
+                    await new Promise(resolve => this.traversalTimeout = setTimeout(resolve, 100)); 
+                }
+
+                if (this.isTraversing) {
+                    this.isTraversing = false;
+                    log(`遍历流程已结束或达到最大深度限制 (${maxDepth})。`);
+                }
+                this._updateControlUI();
+                this.renderStatus();
+            }
+
+            // E. UI 交互 - 扩展 _updateControlUI 来管理手动合成功能 (保持不变)
+            _updateControlUI() {
+                const btn = document.getElementById('toggle-explore-btn');
+                const status = document.getElementById('traversal_status');
+                
+                const isPaused = !this.isTraversing;
+                const manualInputs = document.querySelectorAll('#manual_synthesis_controls input');
+                const manualButton = document.getElementById('synthesize_btn');
+                const synthesisStatusEl = document.getElementById('synthesis_status');
+
+
+                if (this.isTraversing) {
+                    btn.textContent = '1. 暂停遍历';
+                    btn.className = 'btn-explore-pause';
+                    status.textContent = '正在运行...';
+                } else {
+                    const verb = !this.state.traversal_complete ? '恢复' : '开始';
+                    btn.textContent = `1. ${verb}遍历`;
+                    btn.className = 'btn-explore';
+                    status.textContent = '已暂停';
+                }
+                
+                // 控制手动合成功能状态
+                manualInputs.forEach(input => input.disabled = !isPaused);
+                if (manualButton) manualButton.disabled = !isPaused;
+                
+                if (!isPaused) {
+                    synthesisStatusEl.textContent = '遍历运行时，手动合成功能禁用。';
+                } else {
+                    // 仅在暂停且状态栏被禁用文字占用时才清空
+                    if (synthesisStatusEl.textContent === '遍历运行时，手动合成功能禁用。') {
+                        synthesisStatusEl.textContent = '';
+                    }
+                }
+            }
+            
+            toggleRecipeDisplay() {
+                this.recipeDisplayMode = !this.recipeDisplayMode;
+                filterValues['recipe_simple_list'] = '';
+                filterValues['lid'] = '';
+                filterValues['rid'] = '';
+                filterValues['pid'] = '';
+                filterValues['simple'] = '';
+                this.renderStatus();
+                this.saveState();
+                log(`配方显示模式切换为: ${this.recipeDisplayMode ? '简洁列表' : '详细表格'}`);
+            }
+
+            // F. 修改手动合成方法 - 自动调用API获取结果
+            async manualSynthesize() {
+                if (this.isTraversing) {
+                    document.getElementById('synthesis_status').textContent = '请先暂停遍历。';
                     return;
                 }
-                const combinationKey = FSet.values().next().value;
-                const [aId, bId] = JSON.parse(combinationKey);
-                const [a, b] = [getElementName(aId), getElementName(bId)];
-                if (a && b) await callSynthesisAPI(a, b);
-                else FSet.delete(combinationKey); // Clean up invalid data
-            }, 1000);
-        }
 
-        function stopAutoTraverse() {
-            if (!isAutoTraversing) return;
-            isAutoTraversing = false;
-            clearInterval(traverseInterval);
-            traverseInterval = null;
-            autoTraverseBtn.disabled = false;
-            stopTraverseBtn.disabled = true;
-            log('停止自动遍历', 'info');
-        }
+                const nameA = document.getElementById('material_a_name').value.trim();
+                const nameB = document.getElementById('material_b_name').value.trim();
+                const statusEl = document.getElementById('synthesis_status');
+                const resultEl = document.getElementById('result_c_name');
+                statusEl.textContent = '';
+                resultEl.textContent = '?';
+                resultEl.style.color = '#333';
 
-        // --- UI & Rendering ---
-        function updateAndRenderTree() {
-            const treeData = buildTreeData();
-            renderTree(treeData);
-            updateUI();
-        }
+                if (!nameA || !nameB) {
+                    statusEl.textContent = '素材名称不能为空。';
+                    return;
+                }
 
-        function getElementDepth(id) {
-            return (CanonicalPath[id] || []).length - 1;
-        }
+                const itemA = this.getElementByName(nameA);
+                const itemB = this.getElementByName(nameB);
 
-        function buildTreeData() {
-            const tree = {};
-            Object.keys(ElementID).forEach(name => {
-                tree[name] = { 
-                    name, 
-                    depth: getElementDepth(ElementID[name]), 
-                    recipes: [], 
-                    isInitial: INITIAL_ELEMENTS.includes(name),
-                    id: ElementID[name]
+                if (!itemA || !itemB || !itemA.isDetermined || !itemB.isDetermined) {
+                    statusEl.textContent = '素材 A 或 B 不存在或未被确定发现。';
+                    log(`[手动合成失败] 素材 A 或 B 不存在或未被确定发现。A:${nameA}(ID:${itemA?.id}), B:${nameB}(ID:${itemB?.id})`);
+                    return;
+                }
+
+                log(`[手动合成] 尝试合成: ${nameA} + ${nameB} = ?`);
+                statusEl.textContent = '正在调用API...';
+                statusEl.style.color = '#007bff';
+                
+                try {
+                    const resultName = await this.callSynthesisApi(nameA, nameB);
+                    
+                    if (resultName) {
+                        resultEl.textContent = resultName;
+                        resultEl.style.color = '#28a745';
+                        
+                        // 调用 addRecipe，isExploration=false, skipSave=false (非遍历、立即保存)
+                        const result = await this.addRecipe(itemA.id, itemB.id, resultName, false, false); 
+                        
+                        if (result) {
+                            statusEl.textContent = '合成配方添加成功！';
+                            statusEl.style.color = '#28a745';
+                        } else {
+                            statusEl.textContent = '配方已存在，无需重复添加。';
+                            statusEl.style.color = '#ffc107';
+                        }
+                    } else {
+                        resultEl.textContent = '未知';
+                        resultEl.style.color = '#dc3545';
+                        statusEl.textContent = 'API调用失败，未获得合成结果。';
+                        statusEl.style.color = '#dc3545';
+                        log(`[手动合成失败] API未返回有效结果。`);
+                    }
+                    
+                    // 清除输入
+                    document.getElementById('material_a_name').value = '';
+                    document.getElementById('material_b_name').value = '';
+
+                } catch (e) {
+                    log(`[手动合成失败] ${e.message}`);
+                    statusEl.textContent = '合成失败，请检查日志。';
+                    statusEl.style.color = '#dc3545';
+                }
+
+                this.renderStatus();
+            }
+
+            // G. 文件导入/导出 (JSON 保持不变)
+            exportData() {
+                // ... (保持不变) ...
+                const data = {
+                    items: Array.from(this.state.items.entries()), 
+                    recipes: Array.from(this.state.recipes.entries()), 
+                    max_positive_id: this.state.max_positive_id,
+                    min_negative_id: this.state.min_negative_id,
+                    exploration_depth: this.state.exploration_depth,
+                    exploration_A_idx: this.state.exploration_A_idx,
+                    exploration_B_idx: this.state.exploration_B_idx,
+                    traversal_complete: this.state.traversal_complete,
+                    recipeDisplayMode: this.recipeDisplayMode
                 };
-            });
-
-            // 收集所有规则
-            AllRules.forEach(([sources, targetId]) => {
-                const targetName = getElementName(targetId);
-                const source1Name = getElementName(sources[0]);
-                const source2Name = getElementName(sources[1]);
-                if (targetName && source1Name && source2Name) {
-                    tree[targetName].recipes.push({ a: source1Name, b: source2Name });
-                }
-            });
-
-            // 如果启用了单配方模式，则只显示一种合成方式
-            if (singleRecipeMode.checked) {
-                Object.values(tree).forEach(node => {
-                    if (node.recipes.length > 0) {
-                        // 只保留第一个配方
-                        node.recipes = [node.recipes[0]];
-                    }
-                });
+                const jsonStr = JSON.stringify(data, null, 2);
+                
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `synthesis_state_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                log("数据已导出为 JSON 文件 (下载完成)。");
             }
 
-            return tree;
-        }
+            importData() {
+                // ... (保持不变) ...
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'application/json';
+                
+                input.onchange = (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
 
-        function renderTree(treeData) {
-            const sortedNames = Object.keys(treeData).sort((a, b) => {
-                // 初始元素排在最前面
-                const aIsInitial = INITIAL_ELEMENTS.includes(a);
-                const bIsInitial = INITIAL_ELEMENTS.includes(b);
-                
-                if (aIsInitial && !bIsInitial) return -1;
-                if (!aIsInitial && bIsInitial) return 1;
-                
-                // 相同类型（都是初始元素或都不是）按CPath排序
-                const aCPath = CanonicalPath[ElementID[a]];
-                const bCPath = CanonicalPath[ElementID[b]];
-                
-                // 按CPath长度排序
-                if (aCPath.length !== bCPath.length) {
-                    return aCPath.length - bCPath.length;
-                }
-                
-                // 相同长度按CPath内容排序
-                for (let i = 0; i < aCPath.length; i++) {
-                    if (aCPath[i] !== bCPath[i]) {
-                        return aCPath[i] - bCPath[i];
-                    }
-                }
-                
-                // 完全相同则按名称排序
-                return a.localeCompare(b, 'zh-Hans-CN');
-            });
+                    log(`正在读取文件: ${file.name}...`);
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        const jsonStr = e.target.result;
+                        try {
+                            const data = JSON.parse(jsonStr);
+                            
+                            if (!data.items || !data.recipes) throw new Error("导入文件缺少关键的 items 或 recipes 字段。");
 
-            if (sortedNames.length === 0) {
-                synthesisTree.innerHTML = `<div class="empty-state"><i class="fas fa-tree"></i><h3>暂无合成数据</h3></div>`;
-                return;
+                            const newItems = new Map(data.items.map(([id, item]) => [Number(id), Object.assign(new Item(), item)]));
+                            
+                            this.state.items = newItems;
+                            this.state.recipes = new Map(data.recipes); 
+                            this.state.max_positive_id = data.max_positive_id;
+                            this.state.min_negative_id = data.min_negative_id;
+                            this.state.exploration_depth = data.exploration_depth;
+                            this.state.exploration_A_idx = data.exploration_A_idx;
+                            this.state.exploration_B_idx = data.exploration_B_idx;
+                            this.state.traversal_complete = data.traversal_complete;
+                            this.recipeDisplayMode = data.recipeDisplayMode !== undefined ? data.recipeDisplayMode : false;
+                            
+                            this.saveState();
+                            this.renderStatus();
+                            this._updateControlUI();
+                            log("数据导入成功，State 已更新。");
+                        } catch (e) {
+                            log(`数据导入失败: 无效的文件内容或格式错误. ${e.message}`);
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
             }
 
-            const fragment = document.createDocumentFragment();
-            
-            // 创建根节点容器
-            const rootContainer = document.createElement('div');
-            rootContainer.className = 'tree-root';
-            
-            // 渲染所有元素作为根节点
-            sortedNames.forEach(name => {
-                const nodeElement = createNodeElement(treeData[name], treeData, new Set());
-                if (nodeElement) {
-                    rootContainer.appendChild(nodeElement);
-                }
-            });
-            
-            fragment.appendChild(rootContainer);
-            synthesisTree.innerHTML = '';
-            synthesisTree.appendChild(fragment);
-
-            // 绑定展开/折叠事件
-            synthesisTree.querySelectorAll('.node-expand').forEach(el => {
-                el.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const node = e.target.closest('.tree-node');
-                    node.classList.toggle('collapsed');
-                    node.classList.toggle('expanded');
+            // H. 新增配方 TXT 导出 (保持不变)
+            exportRecipesAsText() {
+                let textContent = '';
+                const sortedRecipes = Array.from(this.state.recipes.entries()).sort(([keyA], [keyB]) => {
+                    const [lidA, ridA, pidA] = JSON.parse(keyA);
+                    const [lidB, ridB, pidB] = JSON.parse(keyB);
+                    const pidCompare = customIdCompare(pidA, pidB);
+                    if (pidCompare !== 0) return pidCompare;
+                    return customIdCompare(lidA, lidB);
                 });
-            });
-        }
-        
-        function createNodeElement(node, treeData, rendered) {
-            if (rendered.has(node.name)) return null;
-            rendered.add(node.name);
-
-            const nodeEl = document.createElement('div');
-            nodeEl.className = `tree-node expanded ${node.isInitial ? 'initial-element' : ''}`;
-            nodeEl.dataset.name = node.name;
-            nodeEl.dataset.id = node.id;
-
-            const hasRecipes = node.recipes.length > 0;
-
-            nodeEl.innerHTML = `
-                <div class="node-content ${node.isInitial ? 'initial-item' : ''}">
-                    <span class="node-expand" ${!hasRecipes ? 'style="visibility: hidden;"' : ''}></span>
-                    <span class="item-name">${node.name}</span>
-                </div>
-            `;
-
-            if (hasRecipes) {
-                const childrenEl = document.createElement('div');
-                childrenEl.className = 'children';
                 
-                // 为每个配方创建一个路径
-                node.recipes.forEach(recipe => {
-                    const recipePath = document.createElement('div');
-                    recipePath.className = 'recipe-path';
+                sortedRecipes.forEach(([key, isSimple]) => {
+                    const [lid, rid, pid] = JSON.parse(key);
+                    const nameA = this.getItemNameById(lid);
+                    const nameB = this.getItemNameById(rid);
+                    const nameC = this.getItemNameById(pid);
                     
-                    const recipeContent = document.createElement('div');
-                    recipeContent.className = 'recipe-path-content';
-                    
-                    // 添加第一个成分
-                    const ingredientA = document.createElement('span');
-                    ingredientA.className = 'recipe-ingredient';
-                    ingredientA.textContent = recipe.a;
-                    ingredientA.dataset.name = recipe.a;
-                    recipeContent.appendChild(ingredientA);
-                    
-                    // 添加连接符
-                    const connector = document.createElement('span');
-                    connector.className = 'recipe-connector';
-                    connector.innerHTML = '<i class="fas fa-plus"></i>';
-                    recipeContent.appendChild(connector);
-                    
-                    // 添加第二个成分
-                    const ingredientB = document.createElement('span');
-                    ingredientB.className = 'recipe-ingredient';
-                    ingredientB.textContent = recipe.b;
-                    ingredientB.dataset.name = recipe.b;
-                    recipeContent.appendChild(ingredientB);
-                    
-                    // 添加等号
-                    const equals = document.createElement('span');
-                    equals.className = 'recipe-connector';
-                    equals.innerHTML = '<i class="fas fa-equals"></i>';
-                    recipeContent.appendChild(equals);
-                    
-                    // 添加结果（当前节点）
-                    const result = document.createElement('span');
-                    result.className = 'recipe-ingredient';
-                    result.textContent = node.name;
-                    recipeContent.appendChild(result);
-                    
-                    recipePath.appendChild(recipeContent);
-                    childrenEl.appendChild(recipePath);
-                    
-                    // 为每个成分创建子节点
-                    const childA = treeData[recipe.a];
-                    if (childA) {
-                        const childNode = createNodeElement(childA, treeData, new Set(rendered));
-                        if (childNode) childrenEl.appendChild(childNode);
-                    }
-                    
-                    const childB = treeData[recipe.b];
-                    if (childB && childB.name !== childA.name) {
-                        const childNode = createNodeElement(childB, treeData, new Set(rendered));
-                        if (childNode) childrenEl.appendChild(childNode);
+                    if (!nameA.includes('ID:') && !nameB.includes('ID:') && !nameC.includes('ID:')) {
+                        textContent += `${nameA} + ${nameB} = ${nameC}\n`;
                     }
                 });
+
+                const blob = new Blob([textContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `synthesis_recipes_${new Date().toISOString().slice(0, 10)}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
                 
-                nodeEl.appendChild(childrenEl);
-            }
-            
-            return nodeEl;
-        }
-
-        // 新的搜索过滤逻辑
-        function applySearchFilter() {
-            const term = searchInput.value.trim().toLowerCase();
-            const allNodes = synthesisTree.querySelectorAll('.tree-node');
-            const allItemNodes = synthesisTree.querySelectorAll('.node-content, .recipe-ingredient');
-
-            // 重置所有状态
-            synthesisTree.classList.toggle('search-active', !!term);
-            allNodes.forEach(n => n.classList.remove('is-hidden', 'is-match', 'is-ancestor'));
-            allItemNodes.forEach(n => n.classList.remove('highlight'));
-
-            if (!term) {
-                // 如果搜索被清空，恢复默认视图
-                allNodes.forEach(n => {
-                    const nodeName = n.dataset.name;
-                    const hasRecipes = n.querySelector('.children') && n.querySelector('.children').children.length > 0;
-                    n.classList.toggle('expanded', !hasRecipes || getElementDepth(ElementID[nodeName]) < 2);
-                    n.classList.toggle('collapsed', hasRecipes && getElementDepth(ElementID[nodeName]) >= 2);
-                });
-                return;
+                log("合成表已导出为 TXT 文件 (下载完成)。");
             }
 
-            const matchedNodes = new Set();
-            
-            // 查找匹配的节点
-            allNodes.forEach(node => {
-                const nodeName = node.dataset.name;
+            // I. 新增配方 TXT 导入 (保持不变)
+            importRecipesFromText() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'text/plain';
                 
-                if (nodeName.toLowerCase().includes(term)) {
-                    node.classList.add('is-match');
-                    node.querySelector('.node-content').classList.add('highlight');
-                    matchedNodes.add(node);
-                }
-            });
+                input.onchange = (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
 
-            // 标记匹配节点的祖先节点，使其保持可见
-            matchedNodes.forEach(node => {
-                let parent = node.parentElement.closest('.tree-node');
-                while (parent) {
-                    parent.classList.add('is-ancestor');
-                    parent = parent.parentElement.closest('.tree-node');
-                }
-            });
-            
-            // 隐藏不匹配的节点
-            allNodes.forEach(node => {
-                const isMatch = node.classList.contains('is-match');
-                const isAncestor = node.classList.contains('is-ancestor');
-                const isDescendant = node.closest('.tree-node.is-match');
+                    log(`正在读取文件: ${file.name}...`);
+                    const reader = new FileReader();
+                    
+                    reader.onload = async (e) => {
+                        const textContent = e.target.result;
+                        log("**************************************************");
+                        log("⚠️ 警告：导入的数据未经验证，请勿信任其为最短路径。");
+                        log("**************************************************");
 
-                if (!isMatch && !isAncestor && !isDescendant) {
-                    node.classList.add('is-hidden');
+                        const lines = textContent.split('\n');
+                        const recipeRegex = /^\s*(.+?)\s*\+\s*(.+?)\s*=\s*(.+?)\s*$/;
+                        let importedCount = 0;
+                        let skippedCount = 0;
+
+                        const recipesToProcess = [];
+                        for (let i = 0; i < lines.length; i++) {
+                            const line = lines[i].trim();
+                            if (!line) continue;
+
+                            const match = line.match(recipeRegex);
+                            if (match) {
+                                const nameA = match[1].trim();
+                                const nameB = match[2].trim();
+                                const nameC = match[3].trim();
+
+                                const itemA = this.getElementByName(nameA);
+                                const itemB = this.getElementByName(nameB);
+                                
+                                if (itemA && itemB && itemA.isDetermined && itemB.isDetermined) {
+                                    recipesToProcess.push({ idA: itemA.id, idB: itemB.id, nameC: nameC });
+                                } else {
+                                    skippedCount++;
+                                }
+                            } else {
+                                skippedCount++;
+                            }
+                        }
+
+                        log(`[导入] 开始处理 ${recipesToProcess.length} 条有效配方... (共跳过 ${skippedCount} 条)`);
+
+                        for (let i = 0; i < recipesToProcess.length; i++) {
+                            const { idA, idB, nameC } = recipesToProcess[i];
+                            
+                            // isExploration=false, skipSave=true (非遍历、批量导入模式)
+                            await this.addRecipe(idA, idB, nameC, false, true); 
+                            importedCount++;
+                            
+                            if (i % 50 === 0 || i === recipesToProcess.length - 1) {
+                                this.renderStatus(true, false); 
+                                await new Promise(resolve => setTimeout(resolve, 0)); 
+                            }
+                        }
+
+                        this.saveState();
+                        this.renderStatus();
+                        log(`数据导入处理完成。成功导入 ${importedCount} 条配方。`);
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+
+            // J. 新增清空本地数据功能
+            clearLocalData() {
+                if (confirm("确定要清空所有本地数据吗？此操作不可恢复！")) {
+                    try {
+                        localStorage.removeItem('synthesisAppState');
+                        this.state = new State();
+                        this.initialize();
+                        this.renderStatus();
+                        this._updateControlUI();
+                        log("本地数据已清空，系统已重置。");
+                    } catch (e) {
+                        log(`清空本地数据失败: ${e.message}`);
+                    }
+                }
+            }
+
+            // K. 初始化 (保持不变)
+            initialize() {
+                let loadedSuccessfully = this.loadState();
+                
+                const baseElementsPresent = Array.from(this.state.items.values()).filter(item => item.depth === 0).length === this.state.elements.length;
+
+                if (!loadedSuccessfully || !baseElementsPresent) {
+                    log(loadedSuccessfully ? "警告: 发现本地存储状态不完整（缺少初始元素），将重置并初始化。" : "首次运行或本地存储状态无效，正在初始化...");
+                    
+                    this.state = new State(); 
+                    
+                    this.state.elements.forEach((name, index) => {
+                        this.state.items.set(index, new Item(index, name, 0, 1));
+                        this.state.max_positive_id = index;
+                    });
+                    
+                    this.state.min_negative_id = -1;
+                    this.saveState();
+                    log(`系统 State 初始化成功，创建了 ${this.state.elements.length} 个初始元素。`);
                 } else {
-                    // 展开所有相关节点
-                    node.classList.add('expanded');
-                    node.classList.remove('collapsed');
+                    log("状态已从本地存储加载并验证。");
                 }
-            });
-        }
-        
-        function toggleAllNodes(expand) {
-            synthesisTree.querySelectorAll('.tree-node').forEach(node => {
-                node.classList.toggle('expanded', expand);
-                node.classList.toggle('collapsed', !expand);
-            });
-        }
-        
-        function updateUI() {
-            const elementCount = Object.keys(ElementID).length;
-            totalElementsSpan.textContent = elementCount;
-            totalRecipesSpan.textContent = AllRules.length;
-            pendingCombinationsSpan.textContent = FSet.size;
+                
+                this._updateControlUI();
+            }
             
-            const totalCombinations = (elementCount * (elementCount + 1)) / 2;
-            const explored = totalCombinations > 0 ? totalCombinations - FSet.size : 0;
-            const progress = totalCombinations > 0 ? (explored / totalCombinations) * 100 : 0;
-            progressBar.style.width = `${progress}%`;
-            progressText.textContent = `${Math.floor(explored)}/${Math.floor(totalCombinations)}`;
-            progressPercent.textContent = `${progress.toFixed(1)}%`;
+            // L. 新增：渲染 Datalist 选项
+            renderDatalist() {
+                const datalist = document.getElementById('item_names_datalist');
+                if (!datalist) return;
 
-            updateTierStats();
-        }
+                // 筛选出所有确定状态的 Item (ID >= 0)
+                const determinedItems = Array.from(this.state.items.values()).filter(item => item.isDetermined);
+                
+                // 按名称排序
+                determinedItems.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
 
-        function updateTierStats() {
-            const counts = {};
-            let maxTier = 0;
-            Object.values(ElementID).forEach(id => {
-                const tier = getElementDepth(id);
-                // 跳过T0的统计
-                if (tier === 0) return;
-                counts[tier] = (counts[tier] || 0) + 1;
-                maxTier = Math.max(maxTier, tier);
-            });
-            tierStats.innerHTML = Array.from({length: maxTier + 1}, (_, i) => 
-                counts[i] ? `<div class="tier-stat">T${i}: <span class="tier-stat-value">${counts[i]}</span></div>` : ''
-            ).join('');
-        }
-        
-        // --- 合成表功能 ---
-        function showRecipeModal() {
-            // 生成合成表内容
-            let recipeText = '';
-            AllRules.forEach(rule => {
-                const [sources, targetId] = rule;
-                const source1Name = getElementName(sources[0]);
-                const source2Name = getElementName(sources[1]);
-                const targetName = getElementName(targetId);
-                recipeText += `<div class="recipe-item">${source1Name} + ${source2Name} = ${targetName}</div>`;
-            });
-            
-            recipeList.innerHTML = recipeText;
-            recipeModal.style.display = 'flex';
-        }
-        
-        function hideRecipeModal() {
-            recipeModal.style.display = 'none';
-        }
-        
-        function exportRecipes() {
-            let recipeText = '';
-            AllRules.forEach(rule => {
-                const [sources, targetId] = rule;
-                const source1Name = getElementName(sources[0]);
-                const source2Name = getElementName(sources[1]);
-                const targetName = getElementName(targetId);
-                recipeText += `${source1Name} + ${source2Name} = ${targetName}\n`;
-            });
-            
-            const blob = new Blob([recipeText], { type: 'text/plain' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `synthesis-recipes-${new Date().toISOString().slice(0,10)}.txt`;
-            a.click();
-            URL.revokeObjectURL(a.href);
-            log('合成表导出成功', 'success');
-        }
-        
-        // --- Data I/O & Utils ---
-        function saveToLocalStorage() {
-            const dataStr = JSON.stringify({ ElementID, AllRules, CanonicalPath, currentId });
-            const compressed = LZString.compressToBase64(dataStr);
-            localStorage.setItem('synthesis-data', compressed);
-        }
-        
-        function loadFromLocalStorage() {
-            const compressed = localStorage.getItem('synthesis-data');
-            if (compressed) {
-                try {
-                    const decompressed = LZString.decompressFromBase64(compressed);
-                    const imported = JSON.parse(decompressed);
-                    if (!imported.ElementID || !imported.AllRules) throw new Error('本地存储数据格式不正确');
-                    
-                    ElementID = imported.ElementID;
-                    AllRules = imported.AllRules;
-                    CanonicalPath = imported.CanonicalPath || {};
-                    currentId = imported.currentId || Math.max(...Object.values(ElementID)) + 1;
-                    
-                    initializeFSet();
-                    updateAndRenderTree();
-                    log(`从本地存储加载数据成功: ${Object.keys(ElementID).length}个元素, ${AllRules.length}条规则`, 'success');
-                } catch (error) {
-                    log(`从本地存储加载数据失败: ${error.message}，使用默认初始化`, 'error');
-                    initializeData();
+                // 生成 <option> 列表
+                datalist.innerHTML = determinedItems.map(item => 
+                    `<option value="${item.name}">`
+                ).join('');
+            }
+
+
+            // M. UI 渲染 (应用新的统计可视化)
+            renderStatus(skipScrollSave = false, skipTableContent = false) {
+                // ... (状态和统计信息渲染保持不变) ...
+                document.getElementById('max_id').textContent = this.state.max_positive_id;
+                document.getElementById('min_id').textContent = this.state.min_negative_id;
+                const exp_status = this.state.traversal_complete ? '完成' : '运行中';
+                document.getElementById('exp_depth').textContent = `${this.state.exploration_depth} (A:${this.state.exploration_A_idx}, B:${this.state.exploration_B_idx}, ${exp_status})`;
+
+                document.getElementById('current_depth').textContent = this.state.exploration_depth;
+                const S_D = Array.from(this.state.items.values()).filter(item => item.isDetermined && item.depth <= this.state.exploration_depth);
+                const progress = calculateProgress(S_D.length, this.state.exploration_A_idx, this.state.exploration_B_idx);
+                if (!this.state.traversal_complete) {
+                    document.getElementById('progress_text').textContent = `${progress.current} / ${progress.total} (${progress.percentage.toFixed(2)}%)`;
+                    document.getElementById('progress_bar').value = progress.percentage;
+                } else {
+                    document.getElementById('progress_text').textContent = '100% (深度已完成)';
+                    document.getElementById('progress_bar').value = 100;
                 }
-            } else {
-                initializeData();
+
+                const stats = calculateStatistics(this.state);
+                const { depthVizHTML, widthVizHTML } = generateVisualizationHTML(stats);
+                
+                let statsHtml = `
+                    <div class="stats-item"><strong>总Item数:</strong> <span>${stats.totalItems}</span></div>
+                    <div class="stats-item"><strong>确定Item数:</strong> <span>${stats.determinedItems}</span></div>
+                    <div class="stats-item"><strong>不确定Item数:</strong> <span>${stats.undeterminedItems}</span></div>
+                    
+                    <div class="stats-item"><strong>总Recipe数:</strong> <span>${stats.totalRecipes}</span></div>
+                    <div class="stats-item"><strong>Simple Recipe数:</strong> <span>${stats.simpleRecipes}</span></div>
+                    
+                    <div class="depth-width-stats">
+                        ${depthVizHTML}
+                        ${widthVizHTML}
+                    </div>
+                `;
+                document.getElementById('statistics_block').innerHTML = statsHtml;
+                
+                // 渲染 Datalist 必须在 skipTableContent 之外
+                this.renderDatalist();
+
+                if (skipTableContent) return; 
+
+                const currentItemBody = document.getElementById('item_list')?.querySelector('.table-body');
+                const currentRecipeBody = document.getElementById('recipe_list')?.querySelector('.table-body');
+                if (currentItemBody && !skipScrollSave) scrollPositions.itemList = currentItemBody.scrollTop;
+                if (currentRecipeBody && !skipScrollSave) scrollPositions.recipeList = currentRecipeBody.scrollTop;
+
+                // 5. 渲染 Items (应用新的排序逻辑)
+                let itemHeader = `
+                    <div class="table-header item-header">
+                        <span class="col-seq">No.</span>
+                        <span class="col-id">ID<input id="filter-id" oninput="filterTable('item_list', 'id')" placeholder="过滤 ID" value="${filterValues.id}"></span>
+                        <span class="col-depth">Depth<input id="filter-depth" oninput="filterTable('item_list', 'depth')" placeholder="过滤 D" value="${filterValues.depth}"></span>
+                        <span class="col-width">Width<input id="filter-width" oninput="filterTable('item_list', 'width')" placeholder="过滤 W" value="${filterValues.width}"></span>
+                        <span class="col-name">Name<input id="filter-name" oninput="filterTable('item_list', 'name')" placeholder="过滤 Name" value="${filterValues.name}"></span>
+                    </div>
+                    <div class="table-body item-body">
+                `;
+                let itemBody = '';
+                Array.from(this.state.items.values()).sort((a, b) => customIdCompare(a.id, b.id)).forEach((item, index) => {
+                    const status = item.isDetermined ? '确定' : '非确定';
+                    itemBody += `
+                        <div class="table-row">
+                            <span class="col-seq">${index + 1}</span>
+                            <span class="col-id">${item.id} (${status})</span>
+                            <span class="col-depth">${item.depth}</span>
+                            <span class="col-width">${item.width}</span>
+                            <span class="col-name">${item.name}</span>
+                        </div>
+                    `;
+                });
+                itemBody += '</div>';
+                document.getElementById('item_list').innerHTML = itemHeader + itemBody;
+                
+                // 6. 渲染 Recipes (应用新的排序逻辑)
+                let recipeHeader, recipeBody;
+                const sortedRecipes = Array.from(this.state.recipes.entries()).sort(([keyA], [keyB]) => {
+                    const [lidA, ridA, pidA] = JSON.parse(keyA);
+                    const [lidB, ridB, pidB] = JSON.parse(keyB);
+                    
+                    const pidCompare = customIdCompare(pidA, pidB);
+                    if (pidCompare !== 0) return pidCompare;
+
+                    return customIdCompare(lidA, lidB);
+                });
+
+
+                if (this.recipeDisplayMode) {
+                    recipeHeader = `
+                        <div class="table-header recipe-header">
+                            <span class="col-seq">No.</span>
+                            <span class="col-simple-list">合成配方<input id="filter-recipe_simple_list" oninput="filterTable('recipe_list', 'recipe_simple_list')" placeholder="过滤配方" value="${filterValues.recipe_simple_list}"></span>
+                        </div>
+                        <div class="table-body recipe-body simple-list-body">
+                    `;
+                    recipeBody = '';
+                    sortedRecipes.forEach(([key, isSimple], index) => {
+                        const [lid, rid, pid] = JSON.parse(key);
+                        const nameA = this.getItemNameById(lid);
+                        const nameB = this.getItemNameById(rid);
+                        const nameC = this.getItemNameById(pid);
+                        recipeBody += `<div class="table-row">
+                            <span class="col-seq">${index + 1}</span>
+                            <span class="col-simple-list">${nameA} + ${nameB} = ${nameC}</span>
+                        </div>`;
+                    });
+                    recipeBody += '</div>';
+                } else {
+                    recipeHeader = `
+                        <div class="table-header recipe-header">
+                            <span class="col-seq">No.</span>
+                            <span class="col-lid">LID<input id="filter-lid" oninput="filterTable('recipe_list', 'lid')" placeholder="过滤 LID" value="${filterValues.lid}"></span>
+                            <span class="col-rid">RID<input id="filter-rid" oninput="filterTable('recipe_list', 'rid')" placeholder="过滤 RID" value="${filterValues.rid}"></span>
+                            <span class="col-pid">PID<input id="filter-pid" oninput="filterTable('recipe_list', 'pid')" placeholder="过滤 PID" value="${filterValues.pid}"></span>
+                            <span class="col-simple">Simple<input id="filter-simple" oninput="filterTable('recipe_list', 'simple')" placeholder="T/F" value="${filterValues.simple}"></span>
+                        </div>
+                        <div class="table-body recipe-body">
+                    `;
+                    recipeBody = '';
+                    sortedRecipes.forEach(([key, isSimple], index) => {
+                        const [lid, rid, pid] = JSON.parse(key);
+                        recipeBody += `
+                            <div class="table-row">
+                                <span class="col-seq">${index + 1}</span>
+                                <span class="col-lid">${lid}</span>
+                                <span class="col-rid">${rid}</span>
+                                <span class="col-pid">${pid}</span>
+                                <span class="col-simple">${isSimple ? 'True' : 'False'}</span>
+                            </div>
+                        `;
+                    });
+                    recipeBody += '</div>';
+                }
+                document.getElementById('recipe_list').innerHTML = recipeHeader + recipeBody;
+
+                // 7. 恢复滚动位置 (略)
+                document.getElementById('item_list').querySelector('.table-body').scrollTop = scrollPositions.itemList;
+                document.getElementById('recipe_list').querySelector('.table-body').scrollTop = scrollPositions.recipeList;
+                
+                // 8. 重新应用筛选 (略)
+                ['id', 'depth', 'width', 'name'].forEach(f => { if (filterValues[f]) filterTable('item_list', f); });
+                
+                if (this.recipeDisplayMode) {
+                    if (filterValues['recipe_simple_list']) filterTable('recipe_list', 'recipe_simple_list');
+                } else {
+                    ['lid', 'rid', 'pid', 'simple'].forEach(f => { if (filterValues[f]) filterTable('recipe_list', f); });
+                }
             }
         }
+
+        const app = new SynthesisApp();
         
-        function exportData() {
-            const dataStr = JSON.stringify({ ElementID, AllRules, CanonicalPath, currentId });
-            const compressed = LZString.compressToBase64(dataStr);
-            const blob = new Blob([compressed], { type: 'text/plain' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `synthesis-data-${new Date().toISOString().slice(0,10)}.txt`;
-            a.click();
-            URL.revokeObjectURL(a.href);
-            log('数据导出成功', 'success');
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                try {
-                    const decompressed = LZString.decompressFromBase64(e.target.result);
-                    const imported = JSON.parse(decompressed);
-                    if (!imported.ElementID || !imported.AllRules) throw new Error('导入数据格式不正确');
-                    
-                    ElementID = imported.ElementID;
-                    AllRules = imported.AllRules;
-                    CanonicalPath = imported.CanonicalPath || {};
-                    currentId = imported.currentId || Math.max(...Object.values(ElementID)) + 1;
-                    
-                    initializeFSet();
-                    updateAndRenderTree();
-                    saveToLocalStorage();
-                    log(`数据导入成功: ${Object.keys(ElementID).length}个元素, ${AllRules.length}条规则`, 'success');
-                } catch (error) {
-                    log(`导入失败: ${error.message}`, 'error');
-                } finally {
-                    event.target.value = '';
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function resetData() {
-            if (confirm('确定要重置所有数据吗？')) {
-                initializeData();
-                updateAndRenderTree();
-                saveToLocalStorage();
-                log('数据已重置', 'success');
-            }
-        }
-
-        function log(message, type = 'info') {
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${type}`;
-            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            logOutput.appendChild(entry);
-            logOutput.scrollTop = logOutput.scrollHeight;
-        }
-
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', init);
+        // ----------------------------------------------------
+        // I. 自动初始化
+        // ----------------------------------------------------
+        window.onload = () => {
+            log("页面加载完成，开始自动初始化...");
+            app.initialize();
+            app.renderStatus();
+        };
     </script>
 </body>
 </html>
