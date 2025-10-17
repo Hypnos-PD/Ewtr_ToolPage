@@ -2,42 +2,58 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>合成数据可视化</title>
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
+        :root {
+            --primary-color: #3f51b5;
+            --secondary-color: #4caf50;
+            --accent-color: #ff9800;
+            --text-color: #333;
+            --bg-color: #eef1f6;
+            --card-bg: white;
+            --border-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body { 
             font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            padding: 15px; 
-            background-color: #eef1f6; 
+            padding: 10px; 
+            background-color: var(--bg-color); 
             margin: 0;
+            color: var(--text-color);
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .container { 
             max-width: 1400px; 
             margin: auto; 
-            background: white; 
-            padding: 25px; 
-            border-radius: 16px; 
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); 
-            transition: all 0.3s;
+            background: var(--card-bg); 
+            padding: 20px; 
+            border-radius: var(--border-radius); 
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); 
         }
 
         h1 { 
-            color: #3f51b5; 
-            border-bottom: 3px solid #3f51b5; 
-            padding-bottom: 10px; 
-            margin-bottom: 20px; 
-            font-weight: 300; 
-            font-size: 1.8rem;
+            color: var(--primary-color); 
+            border-bottom: 3px solid var(--primary-color); 
+            padding-bottom: 8px; 
+            margin-bottom: 15px; 
+            font-weight: 400; 
+            font-size: 1.6rem;
         }
         h2 { 
-            color: #333; 
-            margin-top: 25px; 
-            border-left: 5px solid #ff9800; 
-            padding-left: 15px; 
-            font-weight: 400; 
-            font-size: 1.4rem;
+            color: var(--text-color); 
+            margin-top: 20px; 
+            border-left: 5px solid var(--accent-color); 
+            padding-left: 12px; 
+            font-weight: 500; 
+            font-size: 1.3rem;
         }
         
         .chart-container { 
@@ -54,31 +70,33 @@
             display: flex; 
             align-items: center; 
             flex-wrap: wrap; 
-            gap: 12px; 
-            padding: 10px 0; 
+            gap: 8px; 
+            padding: 8px 0; 
         }
         .controls input[type="file"], 
         .controls button, 
         .controls input[type="text"], 
         .controls input[type="number"] { 
-            padding: 9px 14px; 
-            border-radius: 8px; 
+            padding: 10px 12px; 
+            border-radius: 6px; 
             border: 1px solid #ccc; 
             font-size: 14px; 
             transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            width: 80px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            min-height: 44px; /* 提高触摸区域 */
         }
         .controls button { 
-            background-color: #4caf50; 
+            background-color: var(--secondary-color); 
             color: white; 
             cursor: pointer; 
             border: none;
             width: auto !important; 
+            font-weight: 500;
         }
-        .controls button:hover { 
+        .controls button:hover, 
+        .controls button:active { 
             background-color: #388e3c; 
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
         }
         
         .tab-content { display: none; }
@@ -91,33 +109,37 @@
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
             margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
         }
         .tabs::-webkit-scrollbar {
             display: none;
         }
         .tabs button {
-            padding: 10px 18px;
+            padding: 12px 16px;
             border: none;
             cursor: pointer;
-            margin-right: 5px;
             background-color: #e0e0e0;
             border-bottom: 3px solid transparent;
             border-radius: 8px 8px 0 0;
             font-weight: 500;
             flex-shrink: 0;
+            margin-right: 5px;
+            transition: all 0.2s;
         }
         .tabs button.active {
             background-color: white;
-            border-bottom: 3px solid #3f51b5;
+            border-bottom: 3px solid var(--primary-color);
             font-weight: bold;
-            color: #3f51b5;
+            color: var(--primary-color);
         }
         
         #status_message { 
             color: #e53935; 
             font-weight: bold; 
-            margin-left: 15px; 
+            margin-left: 10px; 
             word-break: break-word;
+            flex: 1;
+            min-width: 100%;
         }
 
         #log_area {
@@ -142,12 +164,13 @@
         }
 
         #rectangular_tree_container_wrapper {
-            height: 600px;
+            height: 500px;
             overflow: hidden; 
             cursor: grab;
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
+            position: relative;
         }
 
         #rectangular_tree_container_wrapper.is-dragging {
@@ -207,7 +230,8 @@
         }
         
         #dag_graph_container {
-            height: 600px; 
+            height: 500px; 
+            position: relative;
         }
 
         .toggle-switch {
@@ -218,6 +242,7 @@
             cursor: pointer;
             user-select: none;
             white-space: nowrap; 
+            margin: 5px 0;
         }
 
         .toggle-switch input {
@@ -250,27 +275,49 @@
         }
 
         input:checked + .slider {
-            background-color: #3f51b5;
+            background-color: var(--primary-color);
         }
 
         input:checked + .slider:before {
             transform: translateX(21px);
         }
 
+        /* 全屏按钮 */
+        .fullscreen-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            z-index: 100;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .fullscreen-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
         /* 移动端适配 */
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding: 8px;
             }
             
             .container {
                 padding: 15px;
-                border-radius: 12px;
+                border-radius: 10px;
             }
             
             h1 {
-                font-size: 1.5rem;
-                padding-bottom: 8px;
+                font-size: 1.4rem;
+                padding-bottom: 6px;
             }
             
             h2 {
@@ -309,7 +356,7 @@
             }
             
             .tabs button {
-                padding: 12px 16px;
+                padding: 10px 14px;
                 font-size: 14px;
             }
             
@@ -317,6 +364,7 @@
                 margin-left: 0;
                 margin-top: 10px;
                 text-align: center;
+                order: 10; /* 放在最后 */
             }
             
             #rectangular_tree_container_wrapper,
@@ -342,19 +390,36 @@
             }
             
             /* 调整输入框组布局 */
-            .controls span {
+            .filter-group {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+                align-items: center;
+                width: 100%;
+            }
+            
+            .filter-group span {
                 display: inline-block;
                 width: 60px;
-                text-align: right;
+                text-align: left;
                 margin-right: 5px;
             }
             
-            .controls input[type="number"] {
+            .filter-group input[type="number"] {
                 width: calc(50% - 35px) !important;
                 display: inline-block;
             }
             
             .controls input[type="text"] {
+                width: 100% !important;
+            }
+            
+            /* 优化搜索框布局 */
+            .search-container {
+                width: 100%;
+            }
+            
+            .search-container input {
                 width: 100% !important;
             }
         }
@@ -374,7 +439,7 @@
             
             #rectangular_tree_container_wrapper,
             #dag_graph_container {
-                height: 300px;
+                height: 350px;
             }
             
             .icicle-node-label {
@@ -386,6 +451,10 @@
             .toggle-switch {
                 font-size: 13px;
             }
+            
+            .controls {
+                gap: 5px;
+            }
         }
 
         /* 防止移动端输入框缩放 */
@@ -394,6 +463,48 @@
             input[type="number"] {
                 font-size: 16px !important;
             }
+        }
+
+        /* 全屏样式 */
+        .fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 9999;
+            background: white;
+            padding: 10px;
+        }
+
+        .fullscreen .chart-container {
+            height: calc(100% - 60px) !important;
+        }
+
+        /* 优化性能的样式 */
+        .icicle-node-label {
+            will-change: transform;
+        }
+
+        /* 加载指示器 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .vis-network {
+            /* 优化网络图性能 */
+            transform: translateZ(0);
         }
     </style>
 </head>
@@ -405,7 +516,7 @@
         <div class="controls">
             <input type="file" id="json_file_input" accept="application/json">
             <button onclick="app.importData()">导入 JSON 数据</button>
-             <button onclick="app.clearStorageData()">清除存储数据</button>
+            <button onclick="app.clearStorageData()">清除存储数据</button>
             <span id="status_message">准备就绪。</span>
         </div>
         
@@ -421,17 +532,26 @@
         <div id="tab1" class="tab-content active">
             <h2>矩形冰柱图</h2>
             <div class="controls">
-                <input type="text" id="icicle_search_input" placeholder="输入元素名称实时搜索" oninput="app.renderRectangularTree()" list="item_names_datalist" style="width: 200px;">
+                <div class="search-container">
+                    <input type="text" id="icicle_search_input" placeholder="输入元素名称实时搜索" oninput="app.debouncedRenderRectangularTree()" list="item_names_datalist">
+                </div>
                 
-                <span>深度 (D):</span>
-                <input type="number" id="min_depth_filter_icicle" placeholder="Min D" oninput="app.renderRectangularTree()">
-                <input type="number" id="max_depth_filter_icicle" placeholder="Max D" oninput="app.renderRectangularTree()">
+                <div class="filter-group">
+                    <span>深度 (D):</span>
+                    <input type="number" id="min_depth_filter_icicle" placeholder="Min D" oninput="app.debouncedRenderRectangularTree()">
+                    <input type="number" id="max_depth_filter_icicle" placeholder="Max D" oninput="app.debouncedRenderRectangularTree()">
+                </div>
                 
-                <span>宽度 (W):</span>
-                <input type="number" id="min_width_filter_icicle" placeholder="Min W" oninput="app.renderRectangularTree()">
-                <input type="number" id="max_width_filter_icicle" placeholder="Max W" oninput="app.renderRectangularTree()">
+                <div class="filter-group">
+                    <span>宽度 (W):</span>
+                    <input type="number" id="min_width_filter_icicle" placeholder="Min W" oninput="app.debouncedRenderRectangularTree()">
+                    <input type="number" id="max_width_filter_icicle" placeholder="Max W" oninput="app.debouncedRenderRectangularTree()">
+                </div>
             </div>
             <div id="rectangular_tree_container_wrapper" class="chart-container">
+                 <button class="fullscreen-btn" onclick="app.toggleFullscreen('rectangular_tree_container_wrapper')">
+                    <span>全屏</span>
+                 </button>
                  <div id="rectangular_tree_container" style="transform: translate(0px, 0px) scale(1);">
                     <p style="padding: 20px;">请导入数据并等待图表渲染。</p>
                  </div>
@@ -439,40 +559,49 @@
         </div>
 
         <div id="tab2" class="tab-content">
-            <h2>有向无环图 </h2>
+            <h2>有向无环图</h2>
             <p>点击节点展开/收起其邻居。</p>
             <div class="controls">
-                <input type="text" id="dag_search_input" placeholder="输入要搜索的元素名称" list="item_names_datalist" oninput="app.initialRenderDAG(document.getElementById('dag_search_input').value)" style="width: 200px;">
+                <div class="search-container">
+                    <input type="text" id="dag_search_input" placeholder="输入要搜索的元素名称" list="item_names_datalist" oninput="app.debouncedInitialRenderDAG()">
+                </div>
                 
                 <label class="toggle-switch">
-                    <input type="checkbox" id="non_simple_toggle" onchange="app._updateGraphFromExpandedSet()">
+                    <input type="checkbox" id="non_simple_toggle" onchange="app.debouncedUpdateGraph()">
                     <span class="slider"></span>
                     显示非最简路径
                 </label>
                 
-                <label class="toggle-switch" style="min-width: 140px;">
-                    <input type="checkbox" id="expand_only_parents" checked onchange="app._updateGraphFromExpandedSet()">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="expand_only_parents" checked onchange="app.debouncedUpdateGraph()">
                     <span class="slider"></span>
                     展开素材
                 </label>
 
-                <label class="toggle-switch" style="min-width: 140px;">
-                    <input type="checkbox" id="expand_children_and_peers" onchange="app._updateGraphFromExpandedSet()">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="expand_children_and_peers" onchange="app.debouncedUpdateGraph()">
                     <span class="slider"></span>
                     展开产物
                 </label>
             </div>
             <div class="controls">
-                <span>深度 (D):</span>
-                <input type="number" id="min_depth_filter" placeholder="Min D" oninput="app._updateGraphFromExpandedSet()">
-                <input type="number" id="max_depth_filter" placeholder="Max D" oninput="app._updateGraphFromExpandedSet()">
+                <div class="filter-group">
+                    <span>深度 (D):</span>
+                    <input type="number" id="min_depth_filter" placeholder="Min D" oninput="app.debouncedUpdateGraph()">
+                    <input type="number" id="max_depth_filter" placeholder="Max D" oninput="app.debouncedUpdateGraph()">
+                </div>
                 
-                <span>宽度 (W):</span>
-                <input type="number" id="min_width_filter" placeholder="Min W" oninput="app._updateGraphFromExpandedSet()">
-                <input type="number" id="max_width_filter" placeholder="Max W" oninput="app._updateGraphFromExpandedSet()">
+                <div class="filter-group">
+                    <span>宽度 (W):</span>
+                    <input type="number" id="min_width_filter" placeholder="Min W" oninput="app.debouncedUpdateGraph()">
+                    <input type="number" id="max_width_filter" placeholder="Max W" oninput="app.debouncedUpdateGraph()">
+                </div>
             </div>
 
             <div id="dag_graph_container" class="chart-container">
+                <button class="fullscreen-btn" onclick="app.toggleFullscreen('dag_graph_container')">
+                    <span>全屏</span>
+                </button>
                  <p style="padding: 20px;">请在上方输入框中输入元素名称进行搜索。</p>
             </div>
             <datalist id="item_names_datalist"></datalist>
@@ -527,6 +656,35 @@
                 this.isDragging = false;
                 this.lastMouseX = 0;
                 this.lastMouseY = 0;
+                
+                // 防抖函数
+                this.debounceTimers = {};
+                
+                // 性能优化
+                this.renderScheduled = false;
+            }
+
+            // 防抖函数
+            debounce(func, wait, immediate) {
+                return function() {
+                    const context = this;
+                    const args = arguments;
+                    const later = function() {
+                        this.debounceTimers[func] = null;
+                        if (!immediate) func.apply(context, args);
+                    }.bind(this);
+                    const callNow = immediate && !this.debounceTimers[func];
+                    clearTimeout(this.debounceTimers[func]);
+                    this.debounceTimers[func] = setTimeout(later, wait);
+                    if (callNow) func.apply(context, args);
+                }.bind(this);
+            }
+
+            // 初始化防抖函数
+            initDebounceFunctions() {
+                this.debouncedRenderRectangularTree = this.debounce(this.renderRectangularTree, 300);
+                this.debouncedInitialRenderDAG = this.debounce(this.initialRenderDAG, 300);
+                this.debouncedUpdateGraph = this.debounce(this._updateGraphFromExpandedSet, 300);
             }
 
             logMessage(message, isError = false) {
@@ -619,25 +777,35 @@
             }
 
             _processData(importedData, successMessage) {
-                this.items = new Map();
-                this.recipes = new Map(importedData.recipes);
+                // 显示加载指示器
+                const statusEl = document.getElementById('status_message');
+                statusEl.innerHTML = '<div class="loading"></div>处理数据中...';
                 
-                let maxDepth = 1;
-                importedData.items.forEach(([id, itemData]) => {
-                    const item = Object.assign(new Item(), itemData);
-                    this.items.set(item.id, item);
-                    if (item.isDetermined) {
-                        this.itemNames.set(item.name, item);
-                        if (item.depth > maxDepth) maxDepth = item.depth;
-                    }
-                });
-                this.icicleMaxDepth = maxDepth; 
+                // 使用setTimeout让UI有机会更新
+                setTimeout(() => {
+                    this.items = new Map();
+                    this.recipes = new Map(importedData.recipes);
+                    
+                    let maxDepth = 1;
+                    importedData.items.forEach(([id, itemData]) => {
+                        const item = Object.assign(new Item(), itemData);
+                        this.items.set(item.id, item);
+                        if (item.isDetermined) {
+                            this.itemNames.set(item.name, item);
+                            if (item.depth > maxDepth) maxDepth = item.depth;
+                        }
+                    });
+                    this.icicleMaxDepth = maxDepth; 
 
-                this.preprocessRecipes();
-                this.hasData = true;
+                    this.preprocessRecipes();
+                    this.hasData = true;
 
-                this.logMessage(successMessage, false);
-                this.initSelectorsAndGraphs();
+                    this.logMessage(successMessage, false);
+                    this.initSelectorsAndGraphs();
+                    
+                    // 移除加载指示器
+                    statusEl.innerHTML = successMessage;
+                }, 10);
             }
 
             preprocessRecipes() {
@@ -670,6 +838,7 @@
             }
 
             initSelectorsAndGraphs() {
+                this.initDebounceFunctions();
                 this.renderDatalist();
                 this.renderRectangularTree(); 
                 this.showTab(this.currentTab);
@@ -699,12 +868,14 @@
             setupIcicleZoom() {
                 const wrapper = document.getElementById('rectangular_tree_container_wrapper');
                 
+                // 鼠标事件
                 wrapper.addEventListener('mousedown', (e) => {
                     if (this.currentTab !== 1 || e.button !== 0) return; 
                     this.isDragging = true;
                     this.lastMouseX = e.clientX;
                     this.lastMouseY = e.clientY;
                     wrapper.classList.add('is-dragging');
+                    e.preventDefault();
                 });
 
                 document.addEventListener('mousemove', (e) => {
@@ -722,6 +893,7 @@
                     this.lastMouseY = e.clientY;
 
                     this._applyIcicleTransform();
+                    e.preventDefault();
                 });
 
                 document.addEventListener('mouseup', () => {
@@ -729,9 +901,9 @@
                     wrapper.classList.remove('is-dragging');
                 });
 
-                // 添加触摸事件支持
+                // 触摸事件支持
                 wrapper.addEventListener('touchstart', (e) => {
-                    if (this.currentTab !== 1) return;
+                    if (this.currentTab !== 1 || e.touches.length !== 1) return;
                     this.isDragging = true;
                     const touch = e.touches[0];
                     this.lastMouseX = touch.clientX;
@@ -741,7 +913,7 @@
                 }, { passive: false });
 
                 document.addEventListener('touchmove', (e) => {
-                    if (!this.isDragging || this.currentTab !== 1) return;
+                    if (!this.isDragging || this.currentTab !== 1 || e.touches.length !== 1) return;
                     const touch = e.touches[0];
                     
                     const dx = touch.clientX - this.lastMouseX;
@@ -764,11 +936,60 @@
                     wrapper.classList.remove('is-dragging');
                 });
 
+                // 双指缩放
+                let initialDistance = null;
+                
+                wrapper.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        initialDistance = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+
+                wrapper.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2 && initialDistance !== null) {
+                        const currentDistance = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        
+                        const scaleFactor = currentDistance / initialDistance;
+                        const oldZoom = this.icicleZoomLevel;
+                        this.icicleZoomLevel = Math.max(0.2, Math.min(4.0, oldZoom * scaleFactor));
+                        
+                        // 计算缩放中心
+                        const rect = wrapper.getBoundingClientRect();
+                        const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+                        const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+                        
+                        const unscaledCenterX = (centerX / oldZoom) - this.iciclePanX;
+                        const unscaledCenterY = (centerY / oldZoom) - this.iciclePanY;
+                        
+                        this.iciclePanX = (centerX / this.icicleZoomLevel) - unscaledCenterX;
+                        this.iciclePanY = (centerY / this.icicleZoomLevel) - unscaledCenterY;
+                        this.iciclePanY = Math.min(0, this.iciclePanY);
+                        
+                        this._applyIcicleTransform();
+                        initialDistance = currentDistance;
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+
+                wrapper.addEventListener('touchend', (e) => {
+                    if (e.touches.length < 2) {
+                        initialDistance = null;
+                    }
+                });
+
+                // 滚轮缩放
                 wrapper.addEventListener('wheel', (e) => {
                     if (!this.hasData || this.currentTab !== 1) return;
                     e.preventDefault(); 
 
-                    const scaleFactor = 1.2; 
+                    const scaleFactor = 1.1; 
                     const oldZoom = this.icicleZoomLevel;
                     
                     if (e.deltaY < 0) {
@@ -869,87 +1090,99 @@
 
             renderRectangularTree() {
                 if (!this.hasData) return;
-                const container = document.getElementById('rectangular_tree_container');
-                const wrapper = document.getElementById('rectangular_tree_container_wrapper');
-                const searchName = document.getElementById('icicle_search_input').value.trim().toLowerCase();
                 
-                const minDepth = parseInt(document.getElementById('min_depth_filter_icicle').value) || 0;
-                const maxDepth = parseInt(document.getElementById('max_depth_filter_icicle').value) || this.icicleMaxDepth + 1;
-                const minWidth = parseInt(document.getElementById('min_width_filter_icicle').value) || 0;
-                const maxWidth = parseInt(document.getElementById('max_width_filter_icicle').value) || 10000; 
+                // 如果已经有渲染计划，跳过
+                if (this.renderScheduled) return;
+                this.renderScheduled = true;
                 
-                container.innerHTML = ''; 
-                this._applyIcicleTransform();
-
-                let icicleRoots = Array.from(this.items.values())
-                    .filter(item => item.isDetermined && item.depth > 0);
-                
-                icicleRoots = icicleRoots.filter(item => 
-                    item.depth >= minDepth && item.depth <= maxDepth && 
-                    item.width >= minWidth && item.width <= maxWidth
-                );
-                
-                if (icicleRoots.length === 0) {
-                    container.innerHTML = `<p style="padding: 20px;">根据当前筛选条件，没有发现可分解的元素 (D>0)。</p>`;
-                    this.logMessage("冰柱图渲染完成：没有满足筛选条件的元素。", false);
-                    return;
-                }
-
-                const trees = icicleRoots.map(rootItem => this.getIcicleDecomposition(rootItem.id)).filter(t => t);
-                
-                const filteredTrees = trees.filter(tree => {
-                    if (!searchName) return true;
-                    let found = false;
-                    const checkNode = (node) => {
-                        if (node.name.toLowerCase().includes(searchName)) { found = true; return; }
-                        node.children.forEach(checkNode);
-                    };
-                    checkNode(tree);
-                    return found;
-                });
-                
-                if (filteredTrees.length === 0) {
-                     container.innerHTML = `<p style="padding: 20px;">未找到包含 "${searchName}" 的 Simple 路径。</p>`;
-                     this.logMessage(`冰柱图搜索完成：未找到包含 "${searchName}" 的路径。`, false);
-                    return;
-                }
-
-                const totalIcicleWidthUnits = filteredTrees.reduce((sum, tree) => sum + tree.width, 0);
-                const totalChartWidth = totalIcicleWidthUnits * (this.ICICLE_BASE_UNIT_WIDTH) + filteredTrees.length * 2 * this.ICICLE_NODE_MARGIN; 
-                
-                container.style.width = `${totalChartWidth}px`; 
-                
-                let targetNodeX = -1; 
-                let accumulatedWidth = 0; 
-                
-                filteredTrees.forEach(tree => {
-                    const rootPixelWidth = tree.width * this.ICICLE_BASE_UNIT_WIDTH + 2 * this.ICICLE_NODE_MARGIN;
+                // 使用requestAnimationFrame优化性能
+                requestAnimationFrame(() => {
+                    const container = document.getElementById('rectangular_tree_container');
+                    const wrapper = document.getElementById('rectangular_tree_container_wrapper');
+                    const searchName = document.getElementById('icicle_search_input').value.trim().toLowerCase();
                     
-                    const rootDiv = document.createElement('div');
-                    rootDiv.className = 'icicle-root';
-                    rootDiv.style.width = `${rootPixelWidth}px`; 
-
-                    const rootHtml = this._renderIcicleNode(tree, tree.width, searchName, accumulatedWidth, (foundX) => {
-                        if (targetNodeX === -1) targetNodeX = foundX;
-                    });
-                    rootDiv.innerHTML = rootHtml.html;
-                    container.appendChild(rootDiv);
+                    const minDepth = parseInt(document.getElementById('min_depth_filter_icicle').value) || 0;
+                    const maxDepth = parseInt(document.getElementById('max_depth_filter_icicle').value) || this.icicleMaxDepth + 1;
+                    const minWidth = parseInt(document.getElementById('min_width_filter_icicle').value) || 0;
+                    const maxWidth = parseInt(document.getElementById('max_width_filter_icicle').value) || 10000; 
                     
-                    accumulatedWidth += rootPixelWidth;
-                });
-                
-                if (targetNodeX !== -1) {
-                    const wrapperRect = wrapper.getBoundingClientRect();
-                    const wrapperCenterX = wrapperRect.width / 2;
-                    
-                    this.iciclePanX = (wrapperCenterX / this.icicleZoomLevel) - targetNodeX;
-                    this.iciclePanY = 0; 
-
+                    container.innerHTML = ''; 
                     this._applyIcicleTransform();
-                    this.logMessage(`冰柱图搜索定位到 "${searchName}" 结果。`, false);
-                } else {
-                    this.logMessage(`冰柱图渲染完成，显示 ${filteredTrees.length} 个根元素。`, false);
-                }
+
+                    let icicleRoots = Array.from(this.items.values())
+                        .filter(item => item.isDetermined && item.depth > 0);
+                    
+                    icicleRoots = icicleRoots.filter(item => 
+                        item.depth >= minDepth && item.depth <= maxDepth && 
+                        item.width >= minWidth && item.width <= maxWidth
+                    );
+                    
+                    if (icicleRoots.length === 0) {
+                        container.innerHTML = `<p style="padding: 20px;">根据当前筛选条件，没有发现可分解的元素 (D>0)。</p>`;
+                        this.logMessage("冰柱图渲染完成：没有满足筛选条件的元素。", false);
+                        this.renderScheduled = false;
+                        return;
+                    }
+
+                    const trees = icicleRoots.map(rootItem => this.getIcicleDecomposition(rootItem.id)).filter(t => t);
+                    
+                    const filteredTrees = trees.filter(tree => {
+                        if (!searchName) return true;
+                        let found = false;
+                        const checkNode = (node) => {
+                            if (node.name.toLowerCase().includes(searchName)) { found = true; return; }
+                            node.children.forEach(checkNode);
+                        };
+                        checkNode(tree);
+                        return found;
+                    });
+                    
+                    if (filteredTrees.length === 0) {
+                         container.innerHTML = `<p style="padding: 20px;">未找到包含 "${searchName}" 的 Simple 路径。</p>`;
+                         this.logMessage(`冰柱图搜索完成：未找到包含 "${searchName}" 的路径。`, false);
+                         this.renderScheduled = false;
+                        return;
+                    }
+
+                    const totalIcicleWidthUnits = filteredTrees.reduce((sum, tree) => sum + tree.width, 0);
+                    const totalChartWidth = totalIcicleWidthUnits * (this.ICICLE_BASE_UNIT_WIDTH) + filteredTrees.length * 2 * this.ICICLE_NODE_MARGIN; 
+                    
+                    container.style.width = `${totalChartWidth}px`; 
+                    
+                    let targetNodeX = -1; 
+                    let accumulatedWidth = 0; 
+                    
+                    filteredTrees.forEach(tree => {
+                        const rootPixelWidth = tree.width * this.ICICLE_BASE_UNIT_WIDTH + 2 * this.ICICLE_NODE_MARGIN;
+                        
+                        const rootDiv = document.createElement('div');
+                        rootDiv.className = 'icicle-root';
+                        rootDiv.style.width = `${rootPixelWidth}px`; 
+
+                        const rootHtml = this._renderIcicleNode(tree, tree.width, searchName, accumulatedWidth, (foundX) => {
+                            if (targetNodeX === -1) targetNodeX = foundX;
+                        });
+                        rootDiv.innerHTML = rootHtml.html;
+                        container.appendChild(rootDiv);
+                        
+                        accumulatedWidth += rootPixelWidth;
+                    });
+                    
+                    if (targetNodeX !== -1) {
+                        const wrapperRect = wrapper.getBoundingClientRect();
+                        const wrapperCenterX = wrapperRect.width / 2;
+                        
+                        this.iciclePanX = (wrapperCenterX / this.icicleZoomLevel) - targetNodeX;
+                        this.iciclePanY = 0; 
+
+                        this._applyIcicleTransform();
+                        this.logMessage(`冰柱图搜索定位到 "${searchName}" 结果。`, false);
+                    } else {
+                        this.logMessage(`冰柱图渲染完成，显示 ${filteredTrees.length} 个根元素。`, false);
+                    }
+                    
+                    this.renderScheduled = false;
+                });
             }
 
             _renderIcicleNode(node, parentWidthUnits, searchName, currentX, setTargetXCallback) {
@@ -995,10 +1228,11 @@
             }
 
 
-            initialRenderDAG(searchName) {
+            initialRenderDAG() {
                 if (!this.hasData) return;
+                const searchName = document.getElementById('dag_search_input').value.trim();
                 const container = document.getElementById('dag_graph_container');
-                const searchItem = this.getItemByName(searchName.trim());
+                const searchItem = this.getItemByName(searchName);
                 
                 if (this.network) this.network.destroy();
                 this.network = null;
@@ -1248,12 +1482,17 @@
                             springConstant: 0.05
                         },
                         stabilization: {
-                            iterations: 1500, 
+                            iterations: 1000, // 减少迭代次数提高性能
                             updateInterval: 50, 
                             onlyNecessary: true
                         }
                     },
-                    interaction: { dragNodes: true, zoomView: true, dragView: true }
+                    interaction: { 
+                        dragNodes: true, 
+                        zoomView: true, 
+                        dragView: true,
+                        multiselect: false // 禁用多选提高性能
+                    }
                 };
 
                 this.network = new vis.Network(container, data, options);
@@ -1264,6 +1503,35 @@
                         this.toggleNodeExpansion(nodeId);
                     }
                 });
+            }
+            
+            // 全屏功能
+            toggleFullscreen(elementId) {
+                const element = document.getElementById(elementId);
+                
+                if (!document.fullscreenElement) {
+                    // 进入全屏
+                    if (element.requestFullscreen) {
+                        element.requestFullscreen();
+                    } else if (element.webkitRequestFullscreen) {
+                        element.webkitRequestFullscreen();
+                    } else if (element.msRequestFullscreen) {
+                        element.msRequestFullscreen();
+                    }
+                    
+                    element.classList.add('fullscreen');
+                } else {
+                    // 退出全屏
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                    
+                    element.classList.remove('fullscreen');
+                }
             }
         }
 
@@ -1280,6 +1548,24 @@
                     app.logMessage('请导入 JSON 数据。', false);
                 }
             });
+            
+            // 监听全屏变化
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.addEventListener('msfullscreenchange', handleFullscreenChange);
+            
+            function handleFullscreenChange() {
+                const fullscreenElement = document.fullscreenElement || 
+                                         document.webkitFullscreenElement || 
+                                         document.msFullscreenElement;
+                
+                if (!fullscreenElement) {
+                    // 退出全屏时移除全屏类
+                    document.querySelectorAll('.fullscreen').forEach(el => {
+                        el.classList.remove('fullscreen');
+                    });
+                }
+            }
         });
     </script>
 </body>
