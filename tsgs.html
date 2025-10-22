@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>无限合成探索工具</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); }
+        h1 { color: #28a745; border-bottom: 3px solid #28a745; padding-bottom: 10px; margin-bottom: 20px; }
+        
+        button { padding: 8px 12px; margin: 5px 10px 5px 0; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; transition: background-color 0.3s; }
+        button:disabled { background-color: #a9a9a9; cursor: not-allowed; }
+        .btn-explore { background-color: #007bff; color: white; }
+        .btn-explore-pause { background-color: #dc3545; color: white; }
+        .btn-data { background-color: #6c757d; color: white; }
+        .btn-import-export { background-color: #28a745; color: white; }
+        .btn-copy { background-color: #ffc107; color: #333; margin-left: 10px; padding: 5px 10px; font-size: 13px;}
+        .btn-clear { background-color: #dc3545; color: white; }
+        .btn-explore:hover:not(:disabled) { background-color: #0056b3; }
+        .btn-explore-pause:hover:not(:disabled) { background-color: #c82333; }
+        
+        #manual_synthesis_controls { padding: 15px; background-color: #e9ecef; border-radius: 8px; margin-top: 10px; display: flex; align-items: center; flex-wrap: wrap; }
+        #manual_synthesis_controls input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        #synthesis_status { color: #dc3545; font-weight: bold; margin-left: 15px; }
+        pre { background-color: #e9ecef; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin-top: 10px; font-size: 12px; border: 1px solid #ccc;}
+        .log-area { max-height: 250px; overflow-y: scroll; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; border-left: 5px solid #ffc107; padding-left: 10px; }
+        .fixed-header-table { display: flex; flex-direction: column; height: 300px; border: 1px solid #ccc; border-radius: 8px; margin-top: 10px; }
+        .table-header { display: flex; font-weight: bold; background-color: #f1f1f1; padding: 8px 15px; border-bottom: 1px solid #ccc; flex-shrink: 0; }
+        .table-header input { width: 90%; padding: 2px 5px; margin-top: 2px; font-size: 11px; border: 1px solid #ddd; }
+        .table-body { overflow-y: scroll; font-size: 12px; }
+        .table-row { display: flex; padding: 6px 15px; border-bottom: 1px solid #eee; }
+        .col-seq { flex: 0.5; text-align: right; padding-right: 5px; color: #999;} 
+        .col-id { flex: 2; }
+        .col-name { flex: 6; }
+        .col-lid, .col-rid, .col-pid { flex: 2; text-align: center; }
+        .col-simple-list { flex: 6; text-align: left; padding-left: 5px; }
+        .progress-container { margin-top: 10px; display: flex; align-items: center; }
+        .progress-bar-style { height: 10px; width: 250px; margin-left: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #90caf9; }
+        .stats-item { padding: 5px; border-left: 3px solid #007bff; padding-left: 10px; }
+        .stats-item strong { color: #333; }
+        .stats-item span { color: #007bff; font-weight: bold;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>无限合成探索工具 (性能优化版)</h1>
+        <p>Powered by HypnosPD</p>
+
+        <h2>操作控制</h2>
+        <button id="toggle-explore-btn" class="btn-explore" onclick="app.toggleExploration()">1. 开始探索</button>
+        <button class="btn-data" onclick="app.exportData()">2. 导出 JSON</button>
+        <button class="btn-data" onclick="app.importData()">3. 导入 JSON</button>
+        <button class="btn-import-export" onclick="app.exportRecipesAsText()">4. 导出合成表 (TXT)</button>
+        <button class="btn-clear" onclick="app.clearLocalData()">5. 清空本地数据</button>
+        
+        <h2>手动合成</h2>
+        <div id="manual_synthesis_controls">
+            <input type="text" id="material_a_name" placeholder="素材 A 名称" list="item_names_datalist" style="width: 200px; margin-right: 10px;">
+            <input type="text" id="material_b_name" placeholder="素材 B 名称" list="item_names_datalist" style="width: 200px; margin-right: 10px;">
+            <span style="font-weight: bold; margin-right: 10px;">=</span>
+            <span id="result_c_name" style="width: 200px; min-height: 18px;">?</span>
+            <button id="synthesize_btn" class="btn-import-export" onclick="app.manualSynthesize()">合成</button>
+            <p id="synthesis_status"></p>
+        </div>
+
+        <h2>系统日志</h2><pre id="log_area" class="log-area"></pre>
+
+        <h2>当前状态</h2>
+        <div class="status-box">
+            <p><strong>探索状态:</strong> <span id="exploration_status">已暂停</span> | <strong>已发现元素数:</strong> <span id="max_id">N/A</span></p>
+            <div class="progress-container">
+                <strong>探索进度:</strong><span id="progress_text">N/A</span>
+                <progress id="progress_bar" value="0" max="100" class="progress-bar-style"></progress>
+            </div>
+            <div id="statistics_block" class="stats-grid"></div>
+            <div class="section-header">
+                <h3>所有 Item</h3><button class="btn-copy" onclick="copyContent('item_list')">复制</button>
+            </div><div id="item_list" class="fixed-header-table"></div>
+            <div class="section-header">
+                <h3>所有 Recipe</h3>
+                <div>
+                    <button class="btn-data" onclick="app.toggleRecipeDisplay()">切换</button>
+                    <button class="btn-copy" onclick="copyContent('recipe_list')">复制</button>
+                </div>
+            </div><div id="recipe_list" class="fixed-header-table"></div>
+        </div>
+    </div>
+    <datalist id="item_names_datalist"></datalist>
+    <script>
+        // --- Z & Y & X (全局函数与状态) --- (保持不变)
+        function log(m){const l=document.getElementById('log_area');l.textContent+=`[${new Date().toLocaleTimeString('zh-CN')}] ${m}\n`;l.scrollTop=l.scrollHeight;}
+        async function copyContent(e){const t=document.getElementById(e);if(!t)return;let n="";n+=Array.from(t.querySelector(".table-header").children).slice(1).map(e=>(e.textContent.split(/<| /)[0]).trim()).join("\t").trim()+"\n",t.querySelectorAll(".table-body .table-row").forEach(e=>{e.style.display!=="none"&&(n+=Array.from(e.children).slice(1).map(e=>e.textContent.trim()).join("\t")+"\n")});try{await navigator.clipboard.writeText(n),log("[复制] 内容已成功复制到剪贴板。")}catch(e){log("[复制失败] 请检查浏览器权限或手动复制。")}}
+        const scrollPositions={itemList:0,recipeList:0},filterValues={id:"",name:"",recipe_simple_list:"",lid:"",rid:"",pid:""};
+        function filterTable(e,t){const n=document.getElementById(`filter-${t}`),l=(n?n.value:filterValues[t]||"").toLowerCase().trim();filterValues[t]=l;const i=document.getElementById(e).querySelector(".table-body");if(!i)return;Array.from(i.children).forEach(e=>{let n=!0;"item_list"===e?(filterValues.id&&!e.children[1].textContent.trim().includes(filterValues.id)&&(n=!1),n&&filterValues.name&&!e.children[2].textContent.toLowerCase().includes(filterValues.name)&&(n=!1)):app.recipeDisplayMode?filterValues.recipe_simple_list&&!e.children[1].textContent.toLowerCase().includes(filterValues.recipe_simple_list)&&(n=!1):(filterValues.lid&&!e.children[1].textContent.trim().includes(filterValues.lid)&&(n=!1),n&&filterValues.rid&&!e.children[2].textContent.trim().includes(filterValues.rid)&&(n=!1),n&&filterValues.pid&&!e.children[3].textContent.trim().includes(filterValues.pid)&&(n=!1)),e.style.display=n?"flex":"none"})}
+        function calculateStatistics(s){const t={totalItems:s.items.size,determinedItems:0,totalRecipes:s.recipes.size};s.items.forEach(i=>{if(i.isDetermined)t.determinedItems++;});return t;}
+
+        // ====================================================================
+        // I. 数据结构定义 (保持不变)
+        // ====================================================================
+        class Item { constructor(id, name) { this.id = id; this.name = name; } get isDetermined() { return this.id >= 0; } }
+        class Recipe { constructor(idA, idB, idC) { const [lid, rid] = idA <= idB ? [idA, idB] : [idB, idA]; this.key = JSON.stringify([lid, rid, idC]); } }
+        class State { constructor() { this.elements = ['金', '木', '水', '火', '土']; this.recipes = new Map(); this.items = new Map(); this.max_positive_id = -1; } }
+
+        // ====================================================================
+        // II. 核心应用
+        // ====================================================================
+        class SynthesisApp {
+            constructor() {
+                this.state = new State();
+                this.isExploring = false;
+                this.isPreparing = false; // 新增：准备阶段状态
+                this.recipeDisplayMode = false;
+                this.explorationTimeout = null;
+                this.explorationProgress = { current: 0, total: 0 };
+                this.pendingExplorationPairs = []; // 新增：存储待办列表
+            }
+
+            async callSynthesisApi(itemAName, itemBName) { /* ... (保持不变) ... */ try { const r = await fetch(`https://hc.tsdo.in/api?itemA=${encodeURIComponent(itemAName)}&itemB=${encodeURIComponent(itemBName)}`); return r.ok ? (await r.json()).item || null : null } catch (e) { return null } }
+            saveState() { /* ... (保持不变) ... */ const d={items:Array.from(this.state.items.entries()),recipes:Array.from(this.state.recipes.keys()),max_positive_id:this.state.max_positive_id,recipeDisplayMode:this.recipeDisplayMode};try{localStorage.setItem('synthesisAppState',JSON.stringify(d))}catch(e){log("警告: 无法保存状态到本地存储。")} }
+            loadState() { try { const d = localStorage.getItem('synthesisAppState'); if (!d) return false; const p = JSON.parse(d); this.state.items = new Map(p.items.map(([id, item]) => [Number(id), new Item(item.id, item.name)])); this.state.recipes = new Map(Array.isArray(p.recipes[0]) ? p.recipes : p.recipes.map(k => [k, true])); this.state.max_positive_id = p.max_positive_id; this.recipeDisplayMode = p.recipeDisplayMode || false; return true; } catch (e) { log(`加载状态失败: ${e.message}`); this.state = new State(); return false; } }
+            getItemNameById(id) { return this.state.items.get(id)?.name || `ID:${id}(?)`; }
+            getElementByName(name) { for (const item of this.state.items.values()) { if (item.name === name) return item; } return null; }
+
+            async addRecipe(idA, idB, resultName, skipSave = false) {
+                let itemC = this.getElementByName(resultName);
+                if (!itemC) {
+                    this.state.max_positive_id++;
+                    itemC = new Item(this.state.max_positive_id, resultName);
+                    this.state.items.set(itemC.id, itemC);
+                    log(`   -> [新发现!] ${resultName}: ID ${itemC.id}`);
+                }
+                const recipeKey = new Recipe(idA, idB, itemC.id).key;
+                if (this.state.recipes.has(recipeKey)) return null;
+                this.state.recipes.set(recipeKey, true);
+                log(`   -> [记录配方] ${this.getItemNameById(idA)} + ${this.getItemNameById(idB)} -> ${resultName}`);
+                if (!skipSave) this.saveState();
+                return { key: recipeKey };
+            }
+            
+            // --- D. 权重探索算法 (优化与异步化) ---
+            async prepareExploration() {
+                this.isPreparing = true;
+                this.pendingExplorationPairs = [];
+                this._updateControlUI();
+                log("开始准备探索任务... (此过程可能需要一些时间，但页面不会卡死)");
+
+                const determinedItems = Array.from(this.state.items.values()).filter(item => item.isDetermined);
+                if (determinedItems.length < 2) {
+                    log("确定元素不足，无法开始。");
+                    this.isPreparing = false;
+                    return false;
+                }
+
+                // 1. 高效计算权重
+                const usageCount = new Map(determinedItems.map(item => [item.id, 0]));
+                this.state.recipes.forEach((val, key) => {
+                    const [lid, rid] = JSON.parse(key);
+                    if (usageCount.has(lid)) usageCount.set(lid, usageCount.get(lid) + 1);
+                    if (usageCount.has(rid)) usageCount.set(rid, usageCount.get(rid) + 1);
+                });
+
+                // 2. 高效构建已合成配对的Set
+                const synthesizedPairs = new Set();
+                this.state.recipes.forEach((val, key) => {
+                    const [lid, rid] = JSON.parse(key);
+                    synthesizedPairs.add(`${lid},${rid}`);
+                });
+
+                // 3. 异步分块生成待办列表
+                const CHUNK_SIZE = 5000;
+                const pairsToProcess = [];
+                for (let i = 0; i < determinedItems.length; i++) {
+                    for (let j = i; j < determinedItems.length; j++) {
+                        pairsToProcess.push([determinedItems[i], determinedItems[j]]);
+                    }
+                }
+                
+                log(`总共需要检查 ${pairsToProcess.length} 个组合...`);
+                
+                for (let i = 0; i < pairsToProcess.length; i++) {
+                    const [itemA, itemB] = pairsToProcess[i];
+                    const [lid, rid] = itemA.id <= itemB.id ? [itemA.id, itemB.id] : [itemB.id, itemA.id];
+
+                    if (!synthesizedPairs.has(`${lid},${rid}`)) {
+                        const weight = usageCount.get(lid) + usageCount.get(rid);
+                        this.pendingExplorationPairs.push({ itemA, itemB, weight });
+                    }
+                    
+                    if ((i + 1) % CHUNK_SIZE === 0) {
+                        this.explorationProgress.total = pairsToProcess.length;
+                        this.explorationProgress.current = i + 1;
+                        this.renderStatus(true, true); // 仅更新状态，不重绘表格
+                        await new Promise(resolve => setTimeout(resolve, 0)); // 关键：交还控制权
+                    }
+                }
+
+                if (this.pendingExplorationPairs.length === 0) {
+                    log("准备完成：所有可能的组合都已探索完毕！");
+                    this.isPreparing = false;
+                    return false;
+                }
+                
+                // 4. 排序
+                this.pendingExplorationPairs.sort((a, b) => a.weight - b.weight);
+                log(`准备完成：发现 ${this.pendingExplorationPairs.length} 个待合成组合。`);
+                
+                this.isPreparing = false;
+                return true;
+            }
+
+            async _runExplorationLoop() {
+                let changesFound = true;
+                while (this.isExploring && changesFound) {
+                    const canStart = await this.prepareExploration();
+                    if (!canStart || !this.isExploring) {
+                        changesFound = false;
+                        break;
+                    }
+
+                    this._updateControlUI();
+                    
+                    this.explorationProgress.total = this.pendingExplorationPairs.length;
+                    let hasFoundNewInLoop = false;
+
+                    for (let i = 0; i < this.pendingExplorationPairs.length; i++) {
+                        if (!this.isExploring) {
+                            log("探索流程已暂停。");
+                            changesFound = false; // 标记为无变化，以退出外层while
+                            break;
+                        }
+
+                        this.explorationProgress.current = i + 1;
+                        const { itemA, itemB } = this.pendingExplorationPairs[i];
+                        const resultName = await this.callSynthesisApi(itemA.name, itemB.name);
+
+                        if (resultName) {
+                            const recipeResult = await this.addRecipe(itemA.id, itemB.id, resultName);
+                            if (recipeResult) {
+                                log(`   -> 发现新内容，本轮结束后将重新准备...`);
+                                this.renderStatus(true, false);
+                                hasFoundNewInLoop = true;
+                            }
+                        }
+                        
+                        if (i % 5 === 0) { this.renderStatus(true, true); }
+                    }
+                    changesFound = hasFoundNewInLoop; // 如果本轮有发现，则继续外层循环以重新准备
+                }
+
+                if (this.isExploring) { this.isExploring = false; log("探索流程已完成。"); }
+                this._updateControlUI(); this.renderStatus();
+            }
+
+            toggleExploration() {
+                if (this.isPreparing) return;
+                if (this.isExploring) {
+                    this.isExploring = false; clearTimeout(this.explorationTimeout); log("探索流程已手动暂停。");
+                } else {
+                    this.isExploring = true; log("探索流程开始/恢复..."); this._runExplorationLoop();
+                }
+                this._updateControlUI(); this.renderStatus();
+            }
+
+            // --- E to K (UI & Data I/O) (优化UI反馈) ---
+            _updateControlUI() {
+                const btn = document.getElementById('toggle-explore-btn');
+                const status = document.getElementById('exploration_status');
+                document.querySelectorAll('#manual_synthesis_controls input, #synthesize_btn').forEach(el => el.disabled = this.isExploring || this.isPreparing);
+
+                if (this.isPreparing) {
+                    btn.textContent = '正在准备...'; btn.className = 'btn-explore-pause'; btn.disabled = true; status.textContent = '准备中...';
+                } else if (this.isExploring) {
+                    btn.textContent = '1. 暂停探索'; btn.className = 'btn-explore-pause'; btn.disabled = false; status.textContent = '正在运行...';
+                } else {
+                    btn.textContent = `1. 开始探索`; btn.className = 'btn-explore'; btn.disabled = false; status.textContent = '已暂停';
+                }
+            }
+            
+            toggleRecipeDisplay() { this.recipeDisplayMode = !this.recipeDisplayMode; this.renderStatus(); this.saveState(); }
+            async manualSynthesize() { if(this.isExploring||this.isPreparing)return;const e=document.getElementById("material_a_name").value.trim(),t=document.getElementById("material_b_name").value.trim(),n=document.getElementById("synthesis_status");if(!e||!t)return void(n.textContent="素材名称不能为空。");n.textContent="正在调用API...";const l=await this.callSynthesisApi(e,t);if(l){document.getElementById("result_c_name").textContent=l;const i=this.getElementByName(e),s=this.getElementByName(t);i&&s?(await this.addRecipe(i.id,s.id,l),n.textContent="合成配方已添加/更新！"):(n.textContent="输入的素材不存在，请先通过探索发现。")}else n.textContent="API调用失败或无结果。";this.renderStatus()}
+            exportData() { this.saveState(); const d = localStorage.getItem('synthesisAppState'); const b = new Blob([d], {type: 'application/json'}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`synthesis_state_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href); log("数据已导出为 JSON 文件。"); }
+            importData() { const i=document.createElement('input');i.type='file';i.accept='application/json';i.onchange=e=>{const r=new FileReader();r.onload=re=>{localStorage.setItem('synthesisAppState',re.target.result);if(this.loadState()){this.renderStatus();this._updateControlUI();log("数据导入成功。")}};r.readAsText(e.target.files[0])};i.click() }
+            exportRecipesAsText() { let t = ""; Array.from(this.state.recipes.keys()).forEach(k => { const [lid, rid, pid] = JSON.parse(k); t += `${this.getItemNameById(lid)} + ${this.getItemNameById(rid)} = ${this.getItemNameById(pid)}\n` }); const b = new Blob([t], {type: 'text/plain'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `synthesis_recipes_${new Date().toISOString().slice(0, 10)}.txt`; a.click(); URL.revokeObjectURL(a.href); log("合成表已导出为 TXT 文件。"); }
+            clearLocalData() { if(confirm("确定要清空所有本地数据吗？")){localStorage.removeItem('synthesisAppState');this.state=new State();this.initialize();this.renderStatus();this._updateControlUI();log("本地数据已清空。")} }
+            initialize() { if(!this.loadState()){log("首次运行或数据无效，正在初始化...");this.state.elements.forEach((n,i)=>{this.state.items.set(i,new Item(i,n));this.state.max_positive_id=i});this.saveState()}else{log("状态已从本地存储加载。")} this._updateControlUI(); }
+            renderDatalist() { const d=document.getElementById('item_names_datalist');if(!d)return;const i=Array.from(this.state.items.values()).sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));d.innerHTML=i.map(item=>`<option value="${item.name}">`).join('') }
+
+            // --- M. UI 渲染 (优化UI反馈) ---
+            renderStatus(skipScrollSave = false, skipTableContent = false) {
+                document.getElementById('max_id').textContent = this.state.max_positive_id + 1;
+                const { current, total } = this.explorationProgress;
+                const progressText = document.getElementById('progress_text');
+                const progressBar = document.getElementById('progress_bar');
+                if(this.isPreparing) {
+                    const percentage = total > 0 ? (current / total) * 100 : 0;
+                    progressText.textContent = `准备中... ${current}/${total} (${percentage.toFixed(1)}%)`;
+                    progressBar.value = percentage;
+                } else if (this.isExploring) {
+                    const percentage = total > 0 ? (current / total) * 100 : 0;
+                    progressText.textContent = `探索中... ${current}/${total} (${percentage.toFixed(1)}%)`;
+                    progressBar.value = percentage;
+                } else {
+                    progressText.textContent = '已暂停';
+                    progressBar.value = 0;
+                }
+
+                const stats = calculateStatistics(this.state);
+                document.getElementById('statistics_block').innerHTML = `<div class="stats-item"><strong>总Item数:</strong> <span>${stats.totalItems}</span></div><div class="stats-item"><strong>确定Item数:</strong> <span>${stats.determinedItems}</span></div><div class="stats-item"><strong>总Recipe数:</strong> <span>${stats.totalRecipes}</span></div>`;
+                this.renderDatalist();
+
+                if (skipTableContent) return; 
+
+                // --- (表格渲染部分保持不变，为节省空间已压缩) ---
+                if(!skipScrollSave){scrollPositions.itemList=document.querySelector('#item_list .table-body')?.scrollTop||0;scrollPositions.recipeList=document.querySelector('#recipe_list .table-body')?.scrollTop||0;}
+                let itemHtml=`<div class="table-header"><span class="col-seq">No.</span><span class="col-id">ID<input id="filter-id" oninput="filterTable(\'item_list\',\'id\')"></span><span class="col-name">Name<input id="filter-name" oninput="filterTable(\'item_list\',\'name\')"></span></div><div class="table-body">`;Array.from(this.state.items.values()).sort((a,b)=>a.id-b.id).forEach((item,i)=>{itemHtml+=`<div class="table-row"><span class="col-seq">${i+1}</span><span class="col-id">${item.id}</span><span class="col-name">${item.name}</span></div>`});document.getElementById('item_list').innerHTML=itemHtml+'</div>';
+                let recipeHtml,recipeBody='';const sortedRecipes=Array.from(this.state.recipes.keys()).sort((a,b)=>JSON.parse(a)[2]-JSON.parse(b)[2]);if(this.recipeDisplayMode){recipeHtml=`<div class="table-header"><span class="col-seq">No.</span><span class="col-simple-list">合成配方<input id="filter-recipe_simple_list" oninput="filterTable(\'recipe_list\',\'recipe_simple_list\')"></span></div><div class="table-body">`;sortedRecipes.forEach((key,i)=>{const[l,r,p]=JSON.parse(key);recipeBody+=`<div class="table-row"><span class="col-seq">${i+1}</span><span class="col-simple-list">${this.getItemNameById(l)} + ${this.getItemNameById(r)} = ${this.getItemNameById(p)}</span></div>`});}else{recipeHtml=`<div class="table-header"><span class="col-seq">No.</span><span class="col-lid">LID<input id="filter-lid" oninput="filterTable(\'recipe_list\',\'lid\')"></span><span class="col-rid">RID<input id="filter-rid" oninput="filterTable(\'recipe_list\',\'rid\')"></span><span class="col-pid">PID<input id="filter-pid" oninput="filterTable(\'recipe_list\',\'pid\')"></span></div><div class="table-body">`;sortedRecipes.forEach((key,i)=>{const[l,r,p]=JSON.parse(key);recipeBody+=`<div class="table-row"><span class="col-seq">${i+1}</span><span class="col-lid">${l}</span><span class="col-rid">${r}</span><span class="col-pid">${p}</span></div>`});}
+                document.getElementById('recipe_list').innerHTML=recipeHtml+recipeBody+'</div>';
+                document.querySelector('#item_list .table-body').scrollTop=scrollPositions.itemList;document.querySelector('#recipe_list .table-body').scrollTop=scrollPositions.recipeList;Object.keys(filterValues).forEach(f=>{if(filterValues[f])filterTable(f.includes('recipe')?'recipe_list':'item_list',f);});
+            }
+        }
+
+        const app = new SynthesisApp();
+        window.onload = () => { log("页面加载完成，开始初始化..."); app.initialize(); app.renderStatus(); };
+    </script>
+</body>
+</html>
